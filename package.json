@@ -1,0 +1,50 @@
+{
+  "name": "argon",
+  "version": "2.0.1",
+  "description": "Argon framework provides set of tools to build applications for AEM",
+  "main": "dist/umd/argon.js",
+  "module": "dist/esm/argon.esm.js",
+  "scripts": {
+    "start": "rollup -c --watch --environment SERVE:true",
+    "build": "npm run test && rollup -c",
+    "test": "jest plugin.test.js"
+  },
+  "author": "Sachin Singh",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
+    "@types/jest": "^24.0.19",
+    "babel-eslint": "^10.0.3",
+    "jest": "^24.9.0",
+    "rollup": "^1.25.0",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-eslint": "^7.0.0",
+    "rollup-plugin-livereload": "^1.0.4",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-serve": "^1.0.1",
+    "rollup-plugin-terser": "^5.1.2"
+  },
+  "keywords": [
+    "argon",
+    "argon-framework",
+    "argon-ui",
+    "argon-components",
+    "components",
+    "AEM",
+    "CQ",
+    "webpack"
+  ],
+  "files": [
+    "dist/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scssyworks/argon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/scssyworks/argon/issues"
+  },
+  "homepage": "https://github.com/scssyworks/argon#readme"
+}
