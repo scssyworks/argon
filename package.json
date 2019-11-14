@@ -46,5 +46,12 @@
   "bugs": {
     "url": "https://github.com/scssyworks/argon/issues"
   },
-  "homepage": "https://github.com/scssyworks/argon#readme"
+  "homepage": "https://github.com/scssyworks/argon#readme",
+  "dependencies": {
+    "argon-logger": "^0.1.0",
+    "core-js": "^3.4.1"
+  },
+  "peerDependencies": {
+    "argon-logger": "^0.1.0"
+  }
 }

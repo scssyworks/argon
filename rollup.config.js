@@ -5,12 +5,17 @@ import { terser } from "rollup-plugin-terser";
 import { eslint } from 'rollup-plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
+import packageJson from './package.json';
 
 const commonConfig = {
     input: 'src/index.js',
+    external: Object.keys(packageJson.peerDependencies),
     output: {
         name: 'argon',
-        sourcemap: true
+        sourcemap: true,
+        globals: {
+            "argon-logger": "Logger"
+        }
     },
     plugins: [
         resolve({
