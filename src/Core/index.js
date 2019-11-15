@@ -1,5 +1,8 @@
 import { $ } from '../Selector';
 import { bundleImporter } from '../Importer';
+import { ROOT_EVENT } from '../constants';
+
+const $body = $(document.body);
 
 const componentImports = [];
 
@@ -80,7 +83,10 @@ function initializeModule(currentRoot = $(document), bundleImport) {
 }
 
 export class Core {
-    static init() {
-        return initializeModule.apply(this, arguments);
+    static init(currentRoot, bundleImport) {
+        initializeModule.apply(this, [currentRoot, bundleImport]);
+        $body.on(ROOT_EVENT, (currRoot) => {
+            initializeModule.apply(this, [currRoot, bundleImport]);
+        });
     }
 }

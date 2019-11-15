@@ -3839,6 +3839,8 @@ function bundleImporter({ RefClass, root, parent }) {
     }
 }
 
+const $body$1 = $(document.body);
+
 const componentImports = [];
 
 function diff(newImports, currentRoot) {
@@ -3918,8 +3920,11 @@ function initializeModule(currentRoot = $(document), bundleImport) {
 }
 
 class Core {
-    static init() {
-        return initializeModule.apply(this, arguments);
+    static init(currentRoot, bundleImport) {
+        initializeModule.apply(this, [currentRoot, bundleImport]);
+        $body$1.on(ROOT_EVENT, (currRoot) => {
+            initializeModule.apply(this, [currRoot, bundleImport]);
+        });
     }
 }
 

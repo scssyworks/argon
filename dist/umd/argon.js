@@ -4257,6 +4257,7 @@
     }
   }
 
+  var $body$1 = $(document.body);
   var componentImports = [];
 
   function diff(newImports, currentRoot) {
@@ -4363,8 +4364,13 @@
 
     _createClass(Core, null, [{
       key: "init",
-      value: function init() {
-        return initializeModule.apply(this, arguments);
+      value: function init(currentRoot, bundleImport) {
+        var _this = this;
+
+        initializeModule.apply(this, [currentRoot, bundleImport]);
+        $body$1.on(ROOT_EVENT, function (currRoot) {
+          initializeModule.apply(_this, [currRoot, bundleImport]);
+        });
       }
     }]);
 
