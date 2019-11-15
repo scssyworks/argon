@@ -307,6 +307,40 @@ class Selector {
     }
 }
 
+function isReady(callback) {
+    return ['complete', 'interactive'].includes(this.readyState()) && typeof callback === 'function';
+}
+
+class DocumentSelector extends Selector {
+    constructor(...args) {
+        super(...args);
+    }
+    ready(callback) {
+        if (isReady.apply(this, [callback])) {
+            setTimeout(callback.bind(this[0]), 0);
+        } else {
+            this.on('DOMContentLoaded', () => {
+                if (isReady.apply(this, [callback])) {
+                    callback.apply(this[0]);
+                }
+            });
+        }
+        return this;
+    }
+    readyState() {
+        return this[0].readyState;
+    }
+}
+
 export function $() {
-    return new Selector(...arguments);
+    let args = Array.prototype.slice.call(arguments);
+    if (typeof args[0] === 'function') {
+        const callback = args[0];
+        args = [document];
+        return (new DocumentSelector(...args)).ready(callback);
+    }
+    if (arguments[0] === document) {
+        return new DocumentSelector(...args);
+    }
+    return new Selector(...args);
 }

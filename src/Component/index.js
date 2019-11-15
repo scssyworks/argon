@@ -1,9 +1,7 @@
 import 'core-js/features/promise';
-import Logger from 'argon-logger';
 import { INVALID_RESPONSE_OBJECT, TARGET_MISSING, INVALID_RENDER_OBJECT, ROOT_EVENT } from '../constants';
 import { $, resolveData } from '../Selector';
-
-const logger = new Logger();
+import { logger } from '../utils';
 
 const $body = $(document.body);
 

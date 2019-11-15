@@ -1,7 +1,7 @@
-import resolve from "rollup-plugin-node-resolve";
-import commonjs from "rollup-plugin-commonjs";
-import babel from "rollup-plugin-babel";
-import { terser } from "rollup-plugin-terser";
+import resolve from 'rollup-plugin-node-resolve';
+import commonjs from 'rollup-plugin-commonjs';
+import babel from 'rollup-plugin-babel';
+import { terser } from 'rollup-plugin-terser';
 import { eslint } from 'rollup-plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
@@ -14,7 +14,8 @@ const commonConfig = {
         name: 'argon',
         sourcemap: true,
         globals: {
-            "argon-logger": "Logger"
+            'argon-logger': 'Logger',
+            'silkrouter': 'silkrouter'
         }
     },
     plugins: [
