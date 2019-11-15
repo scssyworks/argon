@@ -1,4 +1,5 @@
 import Logger from 'argon-logger';
+import { param } from 'silkrouter';
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -1279,7 +1280,7 @@ var macrotask = task.set;
 
 var MutationObserver = global_1.MutationObserver || global_1.WebKitMutationObserver;
 var process$1 = global_1.process;
-var Promise = global_1.Promise;
+var Promise$1 = global_1.Promise;
 var IS_NODE = classofRaw(process$1) == 'process';
 // Node.js 11 shows ExperimentalWarning on getting `queueMicrotask`
 var queueMicrotaskDescriptor = getOwnPropertyDescriptor$2(global_1, 'queueMicrotask');
@@ -1320,9 +1321,9 @@ if (!queueMicrotask) {
       node.data = toggle = !toggle;
     };
   // environments with maybe non-completely correct, but existent Promise
-  } else if (Promise && Promise.resolve) {
+  } else if (Promise$1 && Promise$1.resolve) {
     // Promise.resolve without an argument throws an error in LG WebOS 2
-    promise = Promise.resolve(undefined);
+    promise = Promise$1.resolve(undefined);
     then = promise.then;
     notify = function () {
       then.call(promise, flush);
@@ -1926,6 +1927,12 @@ const TARGET_MISSING = `Couldn't resolve target reference.`;
 const INVALID_RENDER_OBJECT = `HTML or Promise returned by "render" method is invalid.
 Hint: If you are using "render.fn" module to render components, use spread operator while combining it with regular HTML:
 e.g. return ['<div>Regular HTML</div>', ...render.fn({ ... })];`;
+const TEMPLATE_MISSING = 'Target template is missing.';
+const INVALID_URL = 'Provided URL is invalid.';
+const INVALID_SCHEMA = 'Invalid schema for URL object. Allowed fields are "path" and "data".';
+const INVALID_TEMPLATE_NAME = 'Please provide a valid template name.';
+const INVALID_SELECTOR = 'Please provide a valid selector.';
+const INVALID_TEMPLATE_MAP = 'Render requires a template object.';
 
 var $includes = arrayIncludes.includes;
 
@@ -2248,11 +2255,45 @@ class Selector {
     }
 }
 
-function $() {
-    return new Selector(...arguments);
+function isReady(callback) {
+    return ['complete', 'interactive'].includes(this.readyState()) && typeof callback === 'function';
 }
 
-const logger = new Logger();
+class DocumentSelector extends Selector {
+    constructor(...args) {
+        super(...args);
+    }
+    ready(callback) {
+        if (isReady.apply(this, [callback])) {
+            setTimeout(callback.bind(this[0]), 0);
+        } else {
+            this.on('DOMContentLoaded', () => {
+                if (isReady.apply(this, [callback])) {
+                    callback.apply(this[0]);
+                }
+            });
+        }
+        return this;
+    }
+    readyState() {
+        return this[0].readyState;
+    }
+}
+
+function $() {
+    let args = Array.prototype.slice.call(arguments);
+    if (typeof args[0] === 'function') {
+        const callback = args[0];
+        args = [document];
+        return (new DocumentSelector(...args)).ready(callback);
+    }
+    if (arguments[0] === document) {
+        return new DocumentSelector(...args);
+    }
+    return new Selector(...args);
+}
+
+const logger$1 = new Logger();
 
 const $body = $(document.body);
 
@@ -2288,7 +2329,7 @@ function _renderTemplate(response) {
             throw new Error(TARGET_MISSING);
         }
     } catch (e) {
-        logger.error('[Argon]:', e);
+        logger$1.error('[Argon]:', e);
     }
 }
 
@@ -2346,7 +2387,7 @@ function _doRender(response) {
             throw new TypeError(INVALID_RENDER_OBJECT);
         }
     } catch (e) {
-        logger.error('[Argon]:', e);
+        logger$1.error('[Argon]:', e);
     }
 }
 
@@ -2365,5 +2406,1522 @@ class Component {
     }
 }
 
-export { Component };
+var nativeAssign = Object.assign;
+
+// `Object.assign` method
+// https://tc39.github.io/ecma262/#sec-object.assign
+// should work with symbols and should have deterministic property order (V8 bug)
+var objectAssign = !nativeAssign || fails(function () {
+  var A = {};
+  var B = {};
+  // eslint-disable-next-line no-undef
+  var symbol = Symbol();
+  var alphabet = 'abcdefghijklmnopqrst';
+  A[symbol] = 7;
+  alphabet.split('').forEach(function (chr) { B[chr] = chr; });
+  return nativeAssign({}, A)[symbol] != 7 || objectKeys(nativeAssign({}, B)).join('') != alphabet;
+}) ? function assign(target, source) { // eslint-disable-line no-unused-vars
+  var T = toObject(target);
+  var argumentsLength = arguments.length;
+  var index = 1;
+  var getOwnPropertySymbols = objectGetOwnPropertySymbols.f;
+  var propertyIsEnumerable = objectPropertyIsEnumerable.f;
+  while (argumentsLength > index) {
+    var S = indexedObject(arguments[index++]);
+    var keys = getOwnPropertySymbols ? objectKeys(S).concat(getOwnPropertySymbols(S)) : objectKeys(S);
+    var length = keys.length;
+    var j = 0;
+    var key;
+    while (length > j) {
+      key = keys[j++];
+      if (!descriptors || propertyIsEnumerable.call(S, key)) T[key] = S[key];
+    }
+  } return T;
+} : nativeAssign;
+
+// `Object.assign` method
+// https://tc39.github.io/ecma262/#sec-object.assign
+_export({ target: 'Object', stat: true, forced: Object.assign !== objectAssign }, {
+  assign: objectAssign
+});
+
+var assign = path.Object.assign;
+
+var MATCH = wellKnownSymbol('match');
+
+// `IsRegExp` abstract operation
+// https://tc39.github.io/ecma262/#sec-isregexp
+var isRegexp = function (it) {
+  var isRegExp;
+  return isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : classofRaw(it) == 'RegExp');
+};
+
+var notARegexp = function (it) {
+  if (isRegexp(it)) {
+    throw TypeError("The method doesn't accept regular expressions");
+  } return it;
+};
+
+var MATCH$1 = wellKnownSymbol('match');
+
+var correctIsRegexpLogic = function (METHOD_NAME) {
+  var regexp = /./;
+  try {
+    '/./'[METHOD_NAME](regexp);
+  } catch (e) {
+    try {
+      regexp[MATCH$1] = false;
+      return '/./'[METHOD_NAME](regexp);
+    } catch (f) { /* empty */ }
+  } return false;
+};
+
+// `String.prototype.includes` method
+// https://tc39.github.io/ecma262/#sec-string.prototype.includes
+_export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
+  includes: function includes(searchString /* , position = 0 */) {
+    return !!~String(requireObjectCoercible(this))
+      .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+var includes$1 = entryUnbind('String', 'includes');
+
+var support = {
+  searchParams: 'URLSearchParams' in self,
+  iterable: 'Symbol' in self && 'iterator' in Symbol,
+  blob:
+    'FileReader' in self &&
+    'Blob' in self &&
+    (function() {
+      try {
+        new Blob();
+        return true
+      } catch (e) {
+        return false
+      }
+    })(),
+  formData: 'FormData' in self,
+  arrayBuffer: 'ArrayBuffer' in self
+};
+
+function isDataView(obj) {
+  return obj && DataView.prototype.isPrototypeOf(obj)
+}
+
+if (support.arrayBuffer) {
+  var viewClasses = [
+    '[object Int8Array]',
+    '[object Uint8Array]',
+    '[object Uint8ClampedArray]',
+    '[object Int16Array]',
+    '[object Uint16Array]',
+    '[object Int32Array]',
+    '[object Uint32Array]',
+    '[object Float32Array]',
+    '[object Float64Array]'
+  ];
+
+  var isArrayBufferView =
+    ArrayBuffer.isView ||
+    function(obj) {
+      return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+    };
+}
+
+function normalizeName(name) {
+  if (typeof name !== 'string') {
+    name = String(name);
+  }
+  if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
+    throw new TypeError('Invalid character in header field name')
+  }
+  return name.toLowerCase()
+}
+
+function normalizeValue(value) {
+  if (typeof value !== 'string') {
+    value = String(value);
+  }
+  return value
+}
+
+// Build a destructive iterator for the value list
+function iteratorFor(items) {
+  var iterator = {
+    next: function() {
+      var value = items.shift();
+      return {done: value === undefined, value: value}
+    }
+  };
+
+  if (support.iterable) {
+    iterator[Symbol.iterator] = function() {
+      return iterator
+    };
+  }
+
+  return iterator
+}
+
+function Headers(headers) {
+  this.map = {};
+
+  if (headers instanceof Headers) {
+    headers.forEach(function(value, name) {
+      this.append(name, value);
+    }, this);
+  } else if (Array.isArray(headers)) {
+    headers.forEach(function(header) {
+      this.append(header[0], header[1]);
+    }, this);
+  } else if (headers) {
+    Object.getOwnPropertyNames(headers).forEach(function(name) {
+      this.append(name, headers[name]);
+    }, this);
+  }
+}
+
+Headers.prototype.append = function(name, value) {
+  name = normalizeName(name);
+  value = normalizeValue(value);
+  var oldValue = this.map[name];
+  this.map[name] = oldValue ? oldValue + ', ' + value : value;
+};
+
+Headers.prototype['delete'] = function(name) {
+  delete this.map[normalizeName(name)];
+};
+
+Headers.prototype.get = function(name) {
+  name = normalizeName(name);
+  return this.has(name) ? this.map[name] : null
+};
+
+Headers.prototype.has = function(name) {
+  return this.map.hasOwnProperty(normalizeName(name))
+};
+
+Headers.prototype.set = function(name, value) {
+  this.map[normalizeName(name)] = normalizeValue(value);
+};
+
+Headers.prototype.forEach = function(callback, thisArg) {
+  for (var name in this.map) {
+    if (this.map.hasOwnProperty(name)) {
+      callback.call(thisArg, this.map[name], name, this);
+    }
+  }
+};
+
+Headers.prototype.keys = function() {
+  var items = [];
+  this.forEach(function(value, name) {
+    items.push(name);
+  });
+  return iteratorFor(items)
+};
+
+Headers.prototype.values = function() {
+  var items = [];
+  this.forEach(function(value) {
+    items.push(value);
+  });
+  return iteratorFor(items)
+};
+
+Headers.prototype.entries = function() {
+  var items = [];
+  this.forEach(function(value, name) {
+    items.push([name, value]);
+  });
+  return iteratorFor(items)
+};
+
+if (support.iterable) {
+  Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
+}
+
+function consumed(body) {
+  if (body.bodyUsed) {
+    return Promise.reject(new TypeError('Already read'))
+  }
+  body.bodyUsed = true;
+}
+
+function fileReaderReady(reader) {
+  return new Promise(function(resolve, reject) {
+    reader.onload = function() {
+      resolve(reader.result);
+    };
+    reader.onerror = function() {
+      reject(reader.error);
+    };
+  })
+}
+
+function readBlobAsArrayBuffer(blob) {
+  var reader = new FileReader();
+  var promise = fileReaderReady(reader);
+  reader.readAsArrayBuffer(blob);
+  return promise
+}
+
+function readBlobAsText(blob) {
+  var reader = new FileReader();
+  var promise = fileReaderReady(reader);
+  reader.readAsText(blob);
+  return promise
+}
+
+function readArrayBufferAsText(buf) {
+  var view = new Uint8Array(buf);
+  var chars = new Array(view.length);
+
+  for (var i = 0; i < view.length; i++) {
+    chars[i] = String.fromCharCode(view[i]);
+  }
+  return chars.join('')
+}
+
+function bufferClone(buf) {
+  if (buf.slice) {
+    return buf.slice(0)
+  } else {
+    var view = new Uint8Array(buf.byteLength);
+    view.set(new Uint8Array(buf));
+    return view.buffer
+  }
+}
+
+function Body() {
+  this.bodyUsed = false;
+
+  this._initBody = function(body) {
+    this._bodyInit = body;
+    if (!body) {
+      this._bodyText = '';
+    } else if (typeof body === 'string') {
+      this._bodyText = body;
+    } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+      this._bodyBlob = body;
+    } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+      this._bodyFormData = body;
+    } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+      this._bodyText = body.toString();
+    } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+      this._bodyArrayBuffer = bufferClone(body.buffer);
+      // IE 10-11 can't handle a DataView body.
+      this._bodyInit = new Blob([this._bodyArrayBuffer]);
+    } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+      this._bodyArrayBuffer = bufferClone(body);
+    } else {
+      this._bodyText = body = Object.prototype.toString.call(body);
+    }
+
+    if (!this.headers.get('content-type')) {
+      if (typeof body === 'string') {
+        this.headers.set('content-type', 'text/plain;charset=UTF-8');
+      } else if (this._bodyBlob && this._bodyBlob.type) {
+        this.headers.set('content-type', this._bodyBlob.type);
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+      }
+    }
+  };
+
+  if (support.blob) {
+    this.blob = function() {
+      var rejected = consumed(this);
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return Promise.resolve(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as blob')
+      } else {
+        return Promise.resolve(new Blob([this._bodyText]))
+      }
+    };
+
+    this.arrayBuffer = function() {
+      if (this._bodyArrayBuffer) {
+        return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+      } else {
+        return this.blob().then(readBlobAsArrayBuffer)
+      }
+    };
+  }
+
+  this.text = function() {
+    var rejected = consumed(this);
+    if (rejected) {
+      return rejected
+    }
+
+    if (this._bodyBlob) {
+      return readBlobAsText(this._bodyBlob)
+    } else if (this._bodyArrayBuffer) {
+      return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+    } else if (this._bodyFormData) {
+      throw new Error('could not read FormData body as text')
+    } else {
+      return Promise.resolve(this._bodyText)
+    }
+  };
+
+  if (support.formData) {
+    this.formData = function() {
+      return this.text().then(decode)
+    };
+  }
+
+  this.json = function() {
+    return this.text().then(JSON.parse)
+  };
+
+  return this
+}
+
+// HTTP methods whose capitalization should be normalized
+var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
+
+function normalizeMethod(method) {
+  var upcased = method.toUpperCase();
+  return methods.indexOf(upcased) > -1 ? upcased : method
+}
+
+function Request(input, options) {
+  options = options || {};
+  var body = options.body;
+
+  if (input instanceof Request) {
+    if (input.bodyUsed) {
+      throw new TypeError('Already read')
+    }
+    this.url = input.url;
+    this.credentials = input.credentials;
+    if (!options.headers) {
+      this.headers = new Headers(input.headers);
+    }
+    this.method = input.method;
+    this.mode = input.mode;
+    this.signal = input.signal;
+    if (!body && input._bodyInit != null) {
+      body = input._bodyInit;
+      input.bodyUsed = true;
+    }
+  } else {
+    this.url = String(input);
+  }
+
+  this.credentials = options.credentials || this.credentials || 'same-origin';
+  if (options.headers || !this.headers) {
+    this.headers = new Headers(options.headers);
+  }
+  this.method = normalizeMethod(options.method || this.method || 'GET');
+  this.mode = options.mode || this.mode || null;
+  this.signal = options.signal || this.signal;
+  this.referrer = null;
+
+  if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+    throw new TypeError('Body not allowed for GET or HEAD requests')
+  }
+  this._initBody(body);
+}
+
+Request.prototype.clone = function() {
+  return new Request(this, {body: this._bodyInit})
+};
+
+function decode(body) {
+  var form = new FormData();
+  body
+    .trim()
+    .split('&')
+    .forEach(function(bytes) {
+      if (bytes) {
+        var split = bytes.split('=');
+        var name = split.shift().replace(/\+/g, ' ');
+        var value = split.join('=').replace(/\+/g, ' ');
+        form.append(decodeURIComponent(name), decodeURIComponent(value));
+      }
+    });
+  return form
+}
+
+function parseHeaders(rawHeaders) {
+  var headers = new Headers();
+  // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
+  // https://tools.ietf.org/html/rfc7230#section-3.2
+  var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
+  preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
+    var parts = line.split(':');
+    var key = parts.shift().trim();
+    if (key) {
+      var value = parts.join(':').trim();
+      headers.append(key, value);
+    }
+  });
+  return headers
+}
+
+Body.call(Request.prototype);
+
+function Response(bodyInit, options) {
+  if (!options) {
+    options = {};
+  }
+
+  this.type = 'default';
+  this.status = options.status === undefined ? 200 : options.status;
+  this.ok = this.status >= 200 && this.status < 300;
+  this.statusText = 'statusText' in options ? options.statusText : 'OK';
+  this.headers = new Headers(options.headers);
+  this.url = options.url || '';
+  this._initBody(bodyInit);
+}
+
+Body.call(Response.prototype);
+
+Response.prototype.clone = function() {
+  return new Response(this._bodyInit, {
+    status: this.status,
+    statusText: this.statusText,
+    headers: new Headers(this.headers),
+    url: this.url
+  })
+};
+
+Response.error = function() {
+  var response = new Response(null, {status: 0, statusText: ''});
+  response.type = 'error';
+  return response
+};
+
+var redirectStatuses = [301, 302, 303, 307, 308];
+
+Response.redirect = function(url, status) {
+  if (redirectStatuses.indexOf(status) === -1) {
+    throw new RangeError('Invalid status code')
+  }
+
+  return new Response(null, {status: status, headers: {location: url}})
+};
+
+var DOMException$1 = self.DOMException;
+try {
+  new DOMException$1();
+} catch (err) {
+  DOMException$1 = function(message, name) {
+    this.message = message;
+    this.name = name;
+    var error = Error(message);
+    this.stack = error.stack;
+  };
+  DOMException$1.prototype = Object.create(Error.prototype);
+  DOMException$1.prototype.constructor = DOMException$1;
+}
+
+function fetch(input, init) {
+  return new Promise(function(resolve, reject) {
+    var request = new Request(input, init);
+
+    if (request.signal && request.signal.aborted) {
+      return reject(new DOMException$1('Aborted', 'AbortError'))
+    }
+
+    var xhr = new XMLHttpRequest();
+
+    function abortXhr() {
+      xhr.abort();
+    }
+
+    xhr.onload = function() {
+      var options = {
+        status: xhr.status,
+        statusText: xhr.statusText,
+        headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+      };
+      options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
+      var body = 'response' in xhr ? xhr.response : xhr.responseText;
+      resolve(new Response(body, options));
+    };
+
+    xhr.onerror = function() {
+      reject(new TypeError('Network request failed'));
+    };
+
+    xhr.ontimeout = function() {
+      reject(new TypeError('Network request failed'));
+    };
+
+    xhr.onabort = function() {
+      reject(new DOMException$1('Aborted', 'AbortError'));
+    };
+
+    xhr.open(request.method, request.url, true);
+
+    if (request.credentials === 'include') {
+      xhr.withCredentials = true;
+    } else if (request.credentials === 'omit') {
+      xhr.withCredentials = false;
+    }
+
+    if ('responseType' in xhr && support.blob) {
+      xhr.responseType = 'blob';
+    }
+
+    request.headers.forEach(function(value, name) {
+      xhr.setRequestHeader(name, value);
+    });
+
+    if (request.signal) {
+      request.signal.addEventListener('abort', abortXhr);
+
+      xhr.onreadystatechange = function() {
+        // DONE (success or failure)
+        if (xhr.readyState === 4) {
+          request.signal.removeEventListener('abort', abortXhr);
+        }
+      };
+    }
+
+    xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
+  })
+}
+
+fetch.polyfill = true;
+
+if (!self.fetch) {
+  self.fetch = fetch;
+  self.Headers = Headers;
+  self.Request = Request;
+  self.Response = Response;
+}
+
+(function (factory) {
+  
+  factory();
+}((function () {
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  function _defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    return Constructor;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) _setPrototypeOf(subClass, superClass);
+  }
+
+  function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+      return o.__proto__ || Object.getPrototypeOf(o);
+    };
+    return _getPrototypeOf(o);
+  }
+
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
+
+    return _setPrototypeOf(o, p);
+  }
+
+  function _assertThisInitialized(self) {
+    if (self === void 0) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return self;
+  }
+
+  function _possibleConstructorReturn(self, call) {
+    if (call && (typeof call === "object" || typeof call === "function")) {
+      return call;
+    }
+
+    return _assertThisInitialized(self);
+  }
+
+  function _superPropBase(object, property) {
+    while (!Object.prototype.hasOwnProperty.call(object, property)) {
+      object = _getPrototypeOf(object);
+      if (object === null) break;
+    }
+
+    return object;
+  }
+
+  function _get(target, property, receiver) {
+    if (typeof Reflect !== "undefined" && Reflect.get) {
+      _get = Reflect.get;
+    } else {
+      _get = function _get(target, property, receiver) {
+        var base = _superPropBase(target, property);
+
+        if (!base) return;
+        var desc = Object.getOwnPropertyDescriptor(base, property);
+
+        if (desc.get) {
+          return desc.get.call(receiver);
+        }
+
+        return desc.value;
+      };
+    }
+
+    return _get(target, property, receiver || target);
+  }
+
+  var Emitter =
+  /*#__PURE__*/
+  function () {
+    function Emitter() {
+      _classCallCheck(this, Emitter);
+
+      Object.defineProperty(this, 'listeners', {
+        value: {},
+        writable: true,
+        configurable: true
+      });
+    }
+
+    _createClass(Emitter, [{
+      key: "addEventListener",
+      value: function addEventListener(type, callback) {
+        if (!(type in this.listeners)) {
+          this.listeners[type] = [];
+        }
+
+        this.listeners[type].push(callback);
+      }
+    }, {
+      key: "removeEventListener",
+      value: function removeEventListener(type, callback) {
+        if (!(type in this.listeners)) {
+          return;
+        }
+
+        var stack = this.listeners[type];
+
+        for (var i = 0, l = stack.length; i < l; i++) {
+          if (stack[i] === callback) {
+            stack.splice(i, 1);
+            return;
+          }
+        }
+      }
+    }, {
+      key: "dispatchEvent",
+      value: function dispatchEvent(event) {
+        var _this = this;
+
+        if (!(event.type in this.listeners)) {
+          return;
+        }
+
+        var debounce = function debounce(callback) {
+          setTimeout(function () {
+            return callback.call(_this, event);
+          });
+        };
+
+        var stack = this.listeners[event.type];
+
+        for (var i = 0, l = stack.length; i < l; i++) {
+          debounce(stack[i]);
+        }
+
+        return !event.defaultPrevented;
+      }
+    }]);
+
+    return Emitter;
+  }();
+
+  var AbortSignal =
+  /*#__PURE__*/
+  function (_Emitter) {
+    _inherits(AbortSignal, _Emitter);
+
+    function AbortSignal() {
+      var _this2;
+
+      _classCallCheck(this, AbortSignal);
+
+      _this2 = _possibleConstructorReturn(this, _getPrototypeOf(AbortSignal).call(this)); // Some versions of babel does not transpile super() correctly for IE <= 10, if the parent
+      // constructor has failed to run, then "this.listeners" will still be undefined and then we call
+      // the parent constructor directly instead as a workaround. For general details, see babel bug:
+      // https://github.com/babel/babel/issues/3041
+      // This hack was added as a fix for the issue described here:
+      // https://github.com/Financial-Times/polyfill-library/pull/59#issuecomment-477558042
+
+      if (!_this2.listeners) {
+        Emitter.call(_assertThisInitialized(_this2));
+      } // Compared to assignment, Object.defineProperty makes properties non-enumerable by default and
+      // we want Object.keys(new AbortController().signal) to be [] for compat with the native impl
+
+
+      Object.defineProperty(_assertThisInitialized(_this2), 'aborted', {
+        value: false,
+        writable: true,
+        configurable: true
+      });
+      Object.defineProperty(_assertThisInitialized(_this2), 'onabort', {
+        value: null,
+        writable: true,
+        configurable: true
+      });
+      return _this2;
+    }
+
+    _createClass(AbortSignal, [{
+      key: "toString",
+      value: function toString() {
+        return '[object AbortSignal]';
+      }
+    }, {
+      key: "dispatchEvent",
+      value: function dispatchEvent(event) {
+        if (event.type === 'abort') {
+          this.aborted = true;
+
+          if (typeof this.onabort === 'function') {
+            this.onabort.call(this, event);
+          }
+        }
+
+        _get(_getPrototypeOf(AbortSignal.prototype), "dispatchEvent", this).call(this, event);
+      }
+    }]);
+
+    return AbortSignal;
+  }(Emitter);
+  var AbortController =
+  /*#__PURE__*/
+  function () {
+    function AbortController() {
+      _classCallCheck(this, AbortController);
+
+      // Compared to assignment, Object.defineProperty makes properties non-enumerable by default and
+      // we want Object.keys(new AbortController()) to be [] for compat with the native impl
+      Object.defineProperty(this, 'signal', {
+        value: new AbortSignal(),
+        writable: true,
+        configurable: true
+      });
+    }
+
+    _createClass(AbortController, [{
+      key: "abort",
+      value: function abort() {
+        var event;
+
+        try {
+          event = new Event('abort');
+        } catch (e) {
+          if (typeof document !== 'undefined') {
+            if (!document.createEvent) {
+              // For Internet Explorer 8:
+              event = document.createEventObject();
+              event.type = 'abort';
+            } else {
+              // For Internet Explorer 11:
+              event = document.createEvent('Event');
+              event.initEvent('abort', false, false);
+            }
+          } else {
+            // Fallback where document isn't available:
+            event = {
+              type: 'abort',
+              bubbles: false,
+              cancelable: false
+            };
+          }
+        }
+
+        this.signal.dispatchEvent(event);
+      }
+    }, {
+      key: "toString",
+      value: function toString() {
+        return '[object AbortController]';
+      }
+    }]);
+
+    return AbortController;
+  }();
+
+  if (typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+    // These are necessary to make sure that we get correct output for:
+    // Object.prototype.toString.call(new AbortController())
+    AbortController.prototype[Symbol.toStringTag] = 'AbortController';
+    AbortSignal.prototype[Symbol.toStringTag] = 'AbortSignal';
+  }
+
+  function polyfillNeeded(self) {
+    if (self.__FORCE_INSTALL_ABORTCONTROLLER_POLYFILL) {
+      console.log('__FORCE_INSTALL_ABORTCONTROLLER_POLYFILL=true is set, will force install polyfill');
+      return true;
+    } // Note that the "unfetch" minimal fetch polyfill defines fetch() without
+    // defining window.Request, and this polyfill need to work on top of unfetch
+    // so the below feature detection needs the !self.AbortController part.
+    // The Request.prototype check is also needed because Safari versions 11.1.2
+    // up to and including 12.1.x has a window.AbortController present but still
+    // does NOT correctly implement abortable fetch:
+    // https://bugs.webkit.org/show_bug.cgi?id=174980#c2
+
+
+    return typeof self.Request === 'function' && !self.Request.prototype.hasOwnProperty('signal') || !self.AbortController;
+  }
+
+  /**
+   * Note: the "fetch.Request" default value is available for fetch imported from
+   * the "node-fetch" package and not in browsers. This is OK since browsers
+   * will be importing umd-polyfill.js from that path "self" is passed the
+   * decorator so the default value will not be used (because browsers that define
+   * fetch also has Request). One quirky setup where self.fetch exists but
+   * self.Request does not is when the "unfetch" minimal fetch polyfill is used
+   * on top of IE11; for this case the browser will try to use the fetch.Request
+   * default value which in turn will be undefined but then then "if (Request)"
+   * will ensure that you get a patched fetch but still no Request (as expected).
+   * @param {fetch, Request = fetch.Request}
+   * @returns {fetch: abortableFetch, Request: AbortableRequest}
+   */
+
+  function abortableFetchDecorator(patchTargets) {
+    if ('function' === typeof patchTargets) {
+      patchTargets = {
+        fetch: patchTargets
+      };
+    }
+
+    var _patchTargets = patchTargets,
+        fetch = _patchTargets.fetch,
+        _patchTargets$Request = _patchTargets.Request,
+        NativeRequest = _patchTargets$Request === void 0 ? fetch.Request : _patchTargets$Request,
+        NativeAbortController = _patchTargets.AbortController,
+        _patchTargets$__FORCE = _patchTargets.__FORCE_INSTALL_ABORTCONTROLLER_POLYFILL,
+        __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL = _patchTargets$__FORCE === void 0 ? false : _patchTargets$__FORCE;
+
+    if (!polyfillNeeded({
+      fetch: fetch,
+      Request: NativeRequest,
+      AbortController: NativeAbortController,
+      __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL: __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL
+    })) {
+      return {
+        fetch: fetch,
+        Request: Request
+      };
+    }
+
+    var Request = NativeRequest; // Note that the "unfetch" minimal fetch polyfill defines fetch() without
+    // defining window.Request, and this polyfill need to work on top of unfetch
+    // hence we only patch it if it's available. Also we don't patch it if signal
+    // is already available on the Request prototype because in this case support
+    // is present and the patching below can cause a crash since it assigns to
+    // request.signal which is technically a read-only property. This latter error
+    // happens when you run the main5.js node-fetch example in the repo
+    // "abortcontroller-polyfill-examples". The exact error is:
+    //   request.signal = init.signal;
+    //   ^
+    // TypeError: Cannot set property signal of #<Request> which has only a getter
+
+    if (Request && !Request.prototype.hasOwnProperty('signal') || __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL) {
+      Request = function Request(input, init) {
+        var signal;
+
+        if (init && init.signal) {
+          signal = init.signal; // Never pass init.signal to the native Request implementation when the polyfill has
+          // been installed because if we're running on top of a browser with a
+          // working native AbortController (i.e. the polyfill was installed due to
+          // __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL being set), then passing our
+          // fake AbortSignal to the native fetch will trigger:
+          // TypeError: Failed to construct 'Request': member signal is not of type AbortSignal.
+
+          delete init.signal;
+        }
+
+        var request = new NativeRequest(input, init);
+
+        if (signal) {
+          Object.defineProperty(request, 'signal', {
+            writable: false,
+            enumerable: false,
+            configurable: true,
+            value: signal
+          });
+        }
+
+        return request;
+      };
+
+      Request.prototype = NativeRequest.prototype;
+    }
+
+    var realFetch = fetch;
+
+    var abortableFetch = function abortableFetch(input, init) {
+      var signal = Request && Request.prototype.isPrototypeOf(input) ? input.signal : init ? init.signal : undefined;
+
+      if (signal) {
+        var abortError;
+
+        try {
+          abortError = new DOMException('Aborted', 'AbortError');
+        } catch (err) {
+          // IE 11 does not support calling the DOMException constructor, use a
+          // regular error object on it instead.
+          abortError = new Error('Aborted');
+          abortError.name = 'AbortError';
+        } // Return early if already aborted, thus avoiding making an HTTP request
+
+
+        if (signal.aborted) {
+          return Promise.reject(abortError);
+        } // Turn an event into a promise, reject it once `abort` is dispatched
+
+
+        var cancellation = new Promise(function (_, reject) {
+          signal.addEventListener('abort', function () {
+            return reject(abortError);
+          }, {
+            once: true
+          });
+        });
+
+        if (init && init.signal) {
+          // Never pass .signal to the native implementation when the polyfill has
+          // been installed because if we're running on top of a browser with a
+          // working native AbortController (i.e. the polyfill was installed due to
+          // __FORCE_INSTALL_ABORTCONTROLLER_POLYFILL being set), then passing our
+          // fake AbortSignal to the native fetch will trigger:
+          // TypeError: Failed to execute 'fetch' on 'Window': member signal is not of type AbortSignal.
+          delete init.signal;
+        } // Return the fastest promise (don't need to wait for request to finish)
+
+
+        return Promise.race([cancellation, realFetch(input, init)]);
+      }
+
+      return realFetch(input, init);
+    };
+
+    return {
+      fetch: abortableFetch,
+      Request: Request
+    };
+  }
+
+  (function (self) {
+
+    if (!polyfillNeeded(self)) {
+      return;
+    }
+
+    if (!self.fetch) {
+      console.warn('fetch() is not available, cannot install abortcontroller-polyfill');
+      return;
+    }
+
+    var _abortableFetch = abortableFetchDecorator(self),
+        fetch = _abortableFetch.fetch,
+        Request = _abortableFetch.Request;
+
+    self.fetch = fetch;
+    self.Request = Request;
+    Object.defineProperty(self, 'AbortController', {
+      writable: true,
+      enumerable: false,
+      configurable: true,
+      value: AbortController
+    });
+    Object.defineProperty(self, 'AbortSignal', {
+      writable: true,
+      enumerable: false,
+      configurable: true,
+      value: AbortSignal
+    });
+  })(typeof self !== 'undefined' ? self : commonjsGlobal);
+
+})));
+
+const requestMap = [];
+
+class Request$1 {
+    constructor(url, config) {
+        if (!config) {
+            config = {};
+        }
+        this.url = url;
+        this.config = config;
+        this.controller = new window.AbortController();
+        const signal = this.controller.signal;
+        this.fetch = window.fetch(url, Object.assign(config, { signal }));
+    }
+    abort() {
+        this.controller.abort();
+    }
+    then(...args) {
+        return this.fetch.then(...args);
+    }
+    catch(...args) {
+        return this.fetch.catch(...args);
+    }
+}
+
+function _removeExisting(url, abort) {
+    const existing = requestMap.filter(req => {
+        const existingUrl = req.url.split('?')[0];
+        const incomingUrl = url.split('?')[0];
+        return existingUrl === incomingUrl;
+    });
+    existing.forEach(req => {
+        if (abort) {
+            req.abort();
+        }
+        existing.splice(existing.indexOf(req), 1);
+    });
+}
+
+function _request(url, config = {}) {
+    if (url && typeof url === 'string') {
+        if (config.cancellable) {
+            _removeExisting(url, config.cancellable);
+            delete config.cancellable;
+        }
+        const currentPromise = new Request$1(url, config);
+        requestMap.push(currentPromise);
+        currentPromise
+            .then(() => _removeExisting(url))
+            .catch(() => _removeExisting(url));
+        return currentPromise;
+    } else {
+        throw new TypeError(INVALID_URL);
+    }
+}
+
+function request() {
+    return _request.apply(this, arguments);
+}
+
+const methods$1 = {
+    GET: 'GET',
+    POST: 'POST',
+    PUT: 'PUT',
+    DELETE: 'DELETE',
+    HEAD: 'HEAD'
+};
+
+/**
+ * Returns true if input value is an object
+ * @param {*} ob
+ */
+function isValidObject(ob) {
+    return ob && typeof ob === 'object' && !Array.isArray(ob);
+}
+
+/**
+ * Returns true if current data or content type is JSON
+ * @param {object} config
+ */
+function isContentTypeJson(config) {
+    const fetchOptions = config.fetchOptions;
+    return config.requestDataType === 'json' || (fetchOptions && fetchOptions.headers && fetchOptions.headers['Content-Type'] === 'application/json');
+}
+
+/**
+ * Resolves input URL data to a valid string based on data type
+ * @param {object} url
+ */
+function resolveURLData(url) {
+    const { config } = this;
+    const { data } = url;
+    if (typeof data !== 'string') {
+        if (data && typeof data === 'object') {
+            if (isContentTypeJson(config)) {
+                url.data = JSON.stringify(data);
+            } else {
+                url.data = param(data);
+            }
+        }
+    }
+}
+
+/**
+ * Validates URL schema if it's an object
+ * @param {*} url
+ */
+function validateSchema(url) {
+    const keys = Object.keys(url);
+    if ((keys.length === 1 && keys[0] === 'path')) {
+        return url;
+    } else if (keys.length === 2 && keys.includes('path') && keys.includes('data')) {
+        resolveURLData.apply(this, [url]);
+        return url;
+    }
+    throw new Error(INVALID_SCHEMA);
+}
+
+/**
+ * Resolves a URL to a valid consumable object
+ * @param {*} path
+ */
+function resolveURL(path) {
+    if (typeof path === 'string') {
+        const [pathString, data] = path.split('?');
+        return [{ path: pathString, data }];
+    } else if (path && typeof path === 'object') {
+        if (Array.isArray(path)) {
+            return path.map(url => {
+                if (typeof url === 'string') {
+                    const [path, data] = url.split('?');
+                    return { path, data };
+                } else if (isValidObject(url)) {
+                    return validateSchema.apply(this, [url]);
+                }
+            });
+        } else if (isValidObject(path)) {
+            return [validateSchema.apply(this, [path])];
+        }
+    }
+    throw new TypeError(INVALID_URL);
+}
+
+/**
+ * Returns a promise with template, target and data information
+ */
+function renderData() {
+    const { config } = this;
+    const { template } = config;
+    if (typeof config.beforeRender === 'function') {
+        config.beforeRender.apply(config, [config.data]);
+    }
+    return new Promise((resolve, reject) => {
+        const responseObj = {
+            template: null,
+            target: config.target
+        };
+        if (template) {
+            if (this.templateMap[template]) {
+                resolve(Object.assign(responseObj, {
+                    template: this.templateMap[template],
+                    data: config.data
+                }));
+            } else {
+                reject(Object.assign(responseObj, {
+                    error: TEMPLATE_MISSING
+                }));
+            }
+        } else {
+            reject(Object.assign(responseObj, {
+                error: INVALID_TEMPLATE_NAME
+            }));
+        }
+    });
+}
+
+/**
+ * Resolves input value to an array based on length
+ * @param {string} inputStr
+ * @param {number} length
+ * @param {string} type
+ */
+function resolveToArray(inputStr, length, type) {
+    const error = type === 'template' ? INVALID_TEMPLATE_NAME : INVALID_SELECTOR;
+    if (
+        (inputStr && typeof inputStr === 'string')
+        || (type === 'target' && isValidSelector(inputStr))
+    ) {
+        const list = [];
+        for (let i = 0; i < length; i++) {
+            list.push(inputStr);
+        }
+        return list;
+    } else if (Array.isArray(inputStr)) {
+        return inputStr.map(str => {
+            if (
+                (str && typeof str === 'string')
+                || (type === 'target' && isValidSelector(str))
+            ) {
+                return str;
+            }
+            throw new TypeError(error);
+        });
+    } else {
+        throw new TypeError(error);
+    }
+}
+
+function doRequest(URL, method, fetchOptions) {
+    if ([methods$1.GET, methods$1.DELETE].includes(method)) {
+        const requestPath = URL.data ? `${URL.path}?${URL.data}` : URL.path;
+        return request(requestPath, Object.assign({}, fetchOptions));
+    } else {
+        return request(URL.path, Object.assign({}, fetchOptions, { body: URL.data }));
+    }
+}
+
+function renderAjaxData(template, target, data, resolve, reject) {
+    renderData.apply({
+        config: {
+            template,
+            target,
+            data
+        },
+        templateMap: this.templateMap
+    }).then(resolve).catch(reject);
+}
+
+function renderError(template, target, error, reject) {
+    if (!template) {
+        template = null;
+        error = TEMPLATE_MISSING;
+    }
+    reject({ template, target, error });
+}
+
+/**
+ * Executes single or multiple requests in parallel
+ */
+function parallel() {
+    const { config, URLs } = this;
+    let { fetchOptions, template, target } = config;
+    template = resolveToArray(template, URLs.length, 'template');
+    target = resolveToArray(target, URLs.length, 'target');
+    const method = fetchOptions.method || methods$1.GET;
+    const requestPromises = URLs.map((URL, index) => new Promise((resolve, reject) => {
+        doRequest(URL, method, fetchOptions)
+            .then(res => res.json())
+            .then(data => {
+                renderAjaxData.apply(this, [template[index], target[index], data, resolve, reject]);
+            })
+            .catch(error => {
+                renderError.apply(this, [this.templateMap[template[index]], target[index], error, reject]);
+            });
+    }));
+    URLs.length = 0;
+    return requestPromises;
+}
+
+function sequence(returnPromises, inputTemplates, targets, upResolve, upReject) {
+    const { config, URLs } = this;
+    let { fetchOptions } = config;
+    if (URLs.length >= 1) {
+        const method = fetchOptions.method || methods$1.GET;
+        returnPromises.push(
+            new Promise((resolve, reject) => {
+                const current = URLs.splice(0, 1)[0];
+                const template = inputTemplates.splice(0, 1)[0];
+                const target = targets.splice(0, 1)[0];
+                doRequest(current, method, fetchOptions)
+                    .then(res => res.json())
+                    .then(data => {
+                        renderAjaxData.apply(this, [template, target, data, resolve, reject]);
+                        sequence.apply(this, [returnPromises, inputTemplates, targets, upResolve, upReject]);
+                    })
+                    .catch(error => {
+                        renderError.apply(this, [this.templateMap[template], target, error, reject]);
+                    });
+            })
+        );
+    } else {
+        Promise.all(returnPromises)
+            .then(upResolve)
+            .catch(upReject);
+    }
+}
+
+function renderAjax() {
+    const { config } = this;
+    try {
+        this.URLs = resolveURL.apply(this, [config.url]);
+        if (this.URLs.length) {
+            if (config.parallel) {
+                return parallel.apply(this);
+            }
+            let { template, target } = config;
+            template = resolveToArray(template, this.URLs.length, 'template');
+            target = resolveToArray(target, this.URLs.length, 'target');
+            return [new Promise((resolve, reject) => {
+                sequence.apply(this, [[], template, target, resolve, reject]);
+            })];
+        }
+        throw new TypeError(INVALID_URL);
+    } catch (e) {
+        logger$1.error('[Webpack]:', e);
+    }
+}
+
+function fnPrivate(config = {}) {
+    if (!config.fetchOptions) {
+        config.fetchOptions = {};
+    }
+    this.config = Object.assign({ parallel: true }, config);
+    if (config.url) {
+        return renderAjax.apply(this);
+    }
+    return [renderData.apply(this)];
+}
+
+function getPrivate(name) {
+    if (typeof name === 'string') {
+        if (this.templateMap[name]) {
+            return this.templateMap[name];
+        }
+        throw new TypeError(TEMPLATE_MISSING);
+    }
+    throw new TypeError(INVALID_TEMPLATE_NAME);
+}
+
+class Render {
+    constructor(templateMap) {
+        if (!templateMap) {
+            throw new TypeError(INVALID_TEMPLATE_MAP);
+        }
+        this.templateMap = templateMap;
+        this.URLs = [];
+        this.config = {};
+    }
+    fn() {
+        return fnPrivate.apply(this, arguments);
+    }
+    get() {
+        return getPrivate.apply(this, arguments);
+    }
+}
+
+function bundleImporter({ RefClass, root, parent }) {
+    if (typeof RefClass === 'function') {
+        // Get component instance
+        this.ref = new RefClass({ root, parent });
+        if (typeof this.ref.init === 'function') {
+            this.ref.init();
+            logger.log(`[Webpack]: component "${this.name}" has been initialized.`);
+        } else {
+            logger.error(`[Webpack]: component "${this.name}" does not have an init method.`);
+        }
+    }
+}
+
+const componentImports = [];
+
+function diff(newImports, currentRoot) {
+    const existingImports = componentImports.filter(imp => imp.parent === currentRoot);
+    existingImports.forEach(imp => {
+        componentImports.splice(componentImports.indexOf(imp), 1);
+    });
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        if (newImports.length === 0) {
+            break;
+        }
+        const curr = newImports.splice(0, 1);
+        const prev = existingImports.filter(imp => (
+            imp.root === curr[0].root
+            && imp.name === curr[0].name
+        ));
+        if (prev.length) {
+            prev.forEach(imp => {
+                componentImports.push(...existingImports.splice(existingImports.indexOf(imp), 1));
+            });
+        } else {
+            componentImports.push(...curr);
+        }
+    }
+    if (existingImports.length) {
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            if (existingImports.length === 0) {
+                break;
+            }
+            existingImports.splice(0, 1).forEach(imp => {
+                if (imp.ref && typeof imp.ref.doDestroy === 'function') {
+                    imp.ref.doDestroy();
+                    logger.log(`[Webpack]: component "${imp.name}" has been destroyed.`);
+                }
+            });
+        }
+    }
+    return componentImports.filter(imp => !imp.imported);
+}
+
+function initializeModule(currentRoot = $(document), bundleImport) {
+    const newImports = [];
+    currentRoot.find('[data-module]').each(el => {
+        const dataModule = $(el).data('module');
+        if (typeof dataModule === 'string') {
+            dataModule.split(',').forEach(mod => {
+                mod = mod.trim();
+                if (!newImports.filter(imp => imp.root === el && imp.name === mod).length) {
+                    newImports.push({
+                        root: el,
+                        parent: currentRoot,
+                        name: mod
+                    });
+                }
+            });
+        }
+    });
+
+    const components = diff(newImports, currentRoot[0]); // Adds new imports and removes redundant imports
+
+    // Fetch component bundles
+    if (components.length) {
+        components.forEach(component => {
+            component.imported = true;
+            bundleImport(component, function (args) {
+                this.chunked = true;
+                bundleImporter.call(component, {
+                    RefClass: args.default,
+                    root: this.root,
+                    parent: this.parent
+                });
+            });
+        });
+    }
+}
+
+class Core {
+    static init() {
+        return initializeModule.apply(this, arguments);
+    }
+}
+
+export { Component, Core, Render };
 //# sourceMappingURL=argon.esm.js.map

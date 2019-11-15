@@ -277,13 +277,13 @@ function getPrivate(name) {
 }
 
 export class Render {
-    URLs = [];
-    config = {};
     constructor(templateMap) {
         if (!templateMap) {
             throw new TypeError(INVALID_TEMPLATE_MAP);
         }
         this.templateMap = templateMap;
+        this.URLs = [];
+        this.config = {};
     }
     fn() {
         return fnPrivate.apply(this, arguments);
