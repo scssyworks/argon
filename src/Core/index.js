@@ -46,8 +46,9 @@ function diff(newImports, currentRoot) {
     return componentImports.filter(imp => !imp.imported);
 }
 
-function initializeModule(currentRoot = $(document), bundleImport) {
+function initializeModule(root = $(document), bundleImport) {
     const newImports = [];
+    const currentRoot = $(root);
     currentRoot.find('[data-module]').each(el => {
         const dataModule = $(el).data('module');
         if (typeof dataModule === 'string') {
@@ -56,7 +57,7 @@ function initializeModule(currentRoot = $(document), bundleImport) {
                 if (!newImports.filter(imp => imp.root === el && imp.name === mod).length) {
                     newImports.push({
                         root: el,
-                        parent: currentRoot,
+                        parent: root,
                         name: mod
                     });
                 }
@@ -64,7 +65,7 @@ function initializeModule(currentRoot = $(document), bundleImport) {
         }
     });
 
-    const components = diff(newImports, currentRoot[0]); // Adds new imports and removes redundant imports
+    const components = diff(newImports, root); // Adds new imports and removes redundant imports
 
     // Fetch component bundles
     if (components.length) {

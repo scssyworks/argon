@@ -4315,9 +4315,10 @@
   }
 
   function initializeModule() {
-    var currentRoot = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : $(document);
+    var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : $(document);
     var bundleImport = arguments.length > 1 ? arguments[1] : undefined;
     var newImports = [];
+    var currentRoot = $(root);
     currentRoot.find('[data-module]').each(function (el) {
       var dataModule = $(el).data('module');
 
@@ -4330,14 +4331,14 @@
           }).length) {
             newImports.push({
               root: el,
-              parent: currentRoot,
+              parent: root,
               name: mod
             });
           }
         });
       }
     });
-    var components = diff(newImports, currentRoot[0]); // Adds new imports and removes redundant imports
+    var components = diff(newImports, root); // Adds new imports and removes redundant imports
     // Fetch component bundles
 
     if (components.length) {
