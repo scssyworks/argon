@@ -43,7 +43,7 @@ export function restoreData(data) {
 export function hiphenate(str) {
     let newStr = '';
     if (typeof str === 'string') {
-        for (i = 0; i < str.length; i++) {
+        for (let i = 0; i < str.length; i++) {
             if (str.charCodeAt(i) >= 65 && str.charCodeAt(i) <= 90) {
                 newStr += `-${str.charAt(i).toLowerCase()}`;
             } else {

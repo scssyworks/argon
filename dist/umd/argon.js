@@ -2170,7 +2170,7 @@
     var newStr = '';
 
     if (typeof str === 'string') {
-      for (i = 0; i < str.length; i++) {
+      for (var i = 0; i < str.length; i++) {
         if (str.charCodeAt(i) >= 65 && str.charCodeAt(i) <= 90) {
           newStr += "-".concat(str.charAt(i).toLowerCase());
         } else {
@@ -2215,9 +2215,9 @@
           selectorRef = [selectorRef];
         }
 
-        for (var _i = 0; _i < selectorRef.length; _i++) {
-          if ([1, 9, 11].includes(selectorRef[_i].nodeType)) {
-            this[this.length++] = selectorRef[_i];
+        for (var i = 0; i < selectorRef.length; i++) {
+          if ([1, 9, 11].includes(selectorRef[i].nodeType)) {
+            this[this.length++] = selectorRef[i];
           }
         }
       }
@@ -2416,8 +2416,8 @@
       key: "each",
       value: function each(callback) {
         if (typeof callback === 'function') {
-          for (var _i2 = 0; _i2 < this.length; _i2++) {
-            callback.apply(this[_i2], [this[_i2], _i2]);
+          for (var i = 0; i < this.length; i++) {
+            callback.apply(this[i], [this[i], i]);
           }
         }
 
