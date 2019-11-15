@@ -43,7 +43,7 @@ function diff(newImports, currentRoot) {
     return componentImports.filter(imp => !imp.imported);
 }
 
-export function initializeModule(currentRoot = $(document), bundleImport) {
+function initializeModule(currentRoot = $(document), bundleImport) {
     const newImports = [];
     currentRoot.find('[data-module]').each(el => {
         const dataModule = $(el).data('module');
@@ -76,5 +76,11 @@ export function initializeModule(currentRoot = $(document), bundleImport) {
                 });
             });
         });
+    }
+}
+
+export class Core {
+    static init() {
+        return initializeModule.apply(this, arguments);
     }
 }

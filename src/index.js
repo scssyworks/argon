@@ -1,5 +1,5 @@
 import { Component } from './Component';
 import { Render } from './Render';
-import { initializeModule } from './Core';
+import { Core } from './Core';
 
-export { Component, Render, initializeModule };
+export { Component, Render, Core };
