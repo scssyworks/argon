@@ -19,6 +19,7 @@
     "babel-eslint": "^10.0.3",
     "jest": "^24.9.0",
     "rollup": "^1.27.0",
+    "core-js": "^3.4.1",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-eslint": "^7.0.0",
@@ -50,9 +51,6 @@
   "homepage": "https://github.com/scssyworks/argon#readme",
   "dependencies": {
     "abortcontroller-polyfill": "^1.4.0",
-    "argon-logger": "^0.1.0",
-    "core-js": "^3.4.1",
-    "silkrouter": "^3.4.6",
     "whatwg-fetch": "^3.0.0"
   },
   "peerDependencies": {
