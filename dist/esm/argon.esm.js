@@ -1956,8 +1956,6 @@ var entryUnbind = function (CONSTRUCTOR, METHOD, length) {
 
 var includes = entryUnbind('Array', 'includes');
 
-const logger = new Logger();
-
 // Polyfill custom event
 if (typeof window.CustomEvent === 'undefined') {
     const CustomEvent = function (event, params) {
@@ -1994,7 +1992,7 @@ function restoreData(data) {
             const parsedData = JSON.parse(data);
             return parsedData;
         } catch (e) {
-            logger.info(e);
+            /* Error in parsing JSON */
         }
     }
     return data;
@@ -2296,6 +2294,8 @@ function $() {
     }
     return new Selector(...args);
 }
+
+const logger = new Logger();
 
 const $body = $(document.body);
 

@@ -2130,8 +2130,6 @@
 
   var includes = entryUnbind('Array', 'includes');
 
-  var logger = new Logger();
-
   if (typeof window.CustomEvent === 'undefined') {
     var CustomEvent = function CustomEvent(event, params) {
       params = params || {
@@ -2164,7 +2162,7 @@
         var parsedData = JSON.parse(data);
         return parsedData;
       } catch (e) {
-        logger.info(e);
+        /* Error in parsing JSON */
       }
     }
 
@@ -2578,6 +2576,8 @@
 
     return _construct(Selector, _toConsumableArray(args));
   }
+
+  var logger = new Logger();
 
   var $body = $(document.body);
 
