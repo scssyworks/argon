@@ -71,6 +71,8 @@ if (process.env.SERVE) {
         }),
         ...esmConfig.plugins
     ];
+    umdConfig.external = undefined;
+    umdConfig.output.globals = undefined;
     umdConfig.plugins = [
         eslint({
             exclude: [
@@ -81,7 +83,7 @@ if (process.env.SERVE) {
         }),
         ...umdConfig.plugins
     ];
-    esmConfig.plugins.push(
+    umdConfig.plugins.push(
         serve({
             open: true,
             contentBase: ['dist'],

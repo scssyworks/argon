@@ -1,4 +1,5 @@
 import 'core-js/features/array/includes';
+import { logger } from '../utils';
 
 // Polyfill custom event
 if (typeof window.CustomEvent === 'undefined') {
@@ -35,7 +36,9 @@ export function restoreData(data) {
         try {
             const parsedData = JSON.parse(data);
             return parsedData;
-        } catch (e) { }
+        } catch (e) {
+            logger.info(e);
+        }
     }
     return data;
 }

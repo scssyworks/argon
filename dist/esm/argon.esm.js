@@ -1956,6 +1956,8 @@ var entryUnbind = function (CONSTRUCTOR, METHOD, length) {
 
 var includes = entryUnbind('Array', 'includes');
 
+const logger = new Logger();
+
 // Polyfill custom event
 if (typeof window.CustomEvent === 'undefined') {
     const CustomEvent = function (event, params) {
@@ -1991,7 +1993,9 @@ function restoreData(data) {
         try {
             const parsedData = JSON.parse(data);
             return parsedData;
-        } catch (e) { }
+        } catch (e) {
+            logger.info(e);
+        }
     }
     return data;
 }
@@ -2293,8 +2297,6 @@ function $() {
     return new Selector(...args);
 }
 
-const logger$1 = new Logger();
-
 const $body = $(document.body);
 
 function _renderHTML(response, target) {
@@ -2329,7 +2331,7 @@ function _renderTemplate(response) {
             throw new Error(TARGET_MISSING);
         }
     } catch (e) {
-        logger$1.error('[Argon]:', e);
+        logger.error('[Argon]:', e);
     }
 }
 
@@ -2387,7 +2389,7 @@ function _doRender(response) {
             throw new TypeError(INVALID_RENDER_OBJECT);
         }
     } catch (e) {
-        logger$1.error('[Argon]:', e);
+        logger.error('[Argon]:', e);
     }
 }
 
@@ -3784,7 +3786,7 @@ function renderAjax() {
         }
         throw new TypeError(INVALID_URL);
     } catch (e) {
-        logger$1.error('[Webpack]:', e);
+        logger.error('[Webpack]:', e);
     }
 }
 
@@ -3832,9 +3834,9 @@ function bundleImporter({ RefClass, root, parent }) {
         this.ref = new RefClass({ root, parent });
         if (typeof this.ref.init === 'function') {
             this.ref.init();
-            logger$1.log(`[Webpack]: component "${this.name}" has been initialized.`);
+            logger.log(`[Webpack]: component "${this.name}" has been initialized.`);
         } else {
-            logger$1.error(`[Webpack]: component "${this.name}" does not have an init method.`);
+            logger.error(`[Webpack]: component "${this.name}" does not have an init method.`);
         }
     }
 }
@@ -3923,11 +3925,12 @@ function initializeModule(root = $(document), bundleImport) {
 class Core {
     static init(currentRoot, bundleImport) {
         initializeModule.apply(this, [currentRoot, bundleImport]);
-        $body$1.on(ROOT_EVENT, (currRoot) => {
+        $body$1.on(ROOT_EVENT, (...args) => {
+            const [, currRoot] = args;
             initializeModule.apply(this, [currRoot, bundleImport]);
         });
     }
 }
 
-export { Component, Core, Render };
+export { $, Component, Core, Render };
 //# sourceMappingURL=argon.esm.js.map

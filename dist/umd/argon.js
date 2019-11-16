@@ -2130,6 +2130,8 @@
 
   var includes = entryUnbind('Array', 'includes');
 
+  var logger = new Logger();
+
   if (typeof window.CustomEvent === 'undefined') {
     var CustomEvent = function CustomEvent(event, params) {
       params = params || {
@@ -2161,7 +2163,9 @@
       try {
         var parsedData = JSON.parse(data);
         return parsedData;
-      } catch (e) {}
+      } catch (e) {
+        logger.info(e);
+      }
     }
 
     return data;
@@ -2575,8 +2579,6 @@
     return _construct(Selector, _toConsumableArray(args));
   }
 
-  var logger$1 = new Logger();
-
   var $body = $(document.body);
 
   function _renderHTML(response, target) {
@@ -2617,7 +2619,7 @@
         throw new Error(TARGET_MISSING);
       }
     } catch (e) {
-      logger$1.error('[Argon]:', e);
+      logger.error('[Argon]:', e);
     }
   }
 
@@ -2684,7 +2686,7 @@
         throw new TypeError(INVALID_RENDER_OBJECT);
       }
     } catch (e) {
-      logger$1.error('[Argon]:', e);
+      logger.error('[Argon]:', e);
     }
   }
 
@@ -4172,7 +4174,7 @@
 
       throw new TypeError(INVALID_URL);
     } catch (e) {
-      logger$1.error('[Webpack]:', e);
+      logger.error('[Webpack]:', e);
     }
   }
 
@@ -4250,9 +4252,9 @@
 
       if (typeof this.ref.init === 'function') {
         this.ref.init();
-        logger$1.log("[Webpack]: component \"".concat(this.name, "\" has been initialized."));
+        logger.log("[Webpack]: component \"".concat(this.name, "\" has been initialized."));
       } else {
-        logger$1.error("[Webpack]: component \"".concat(this.name, "\" does not have an init method."));
+        logger.error("[Webpack]: component \"".concat(this.name, "\" does not have an init method."));
       }
     }
   }
@@ -4369,7 +4371,12 @@
         var _this = this;
 
         initializeModule.apply(this, [currentRoot, bundleImport]);
-        $body$1.on(ROOT_EVENT, function (currRoot) {
+        $body$1.on(ROOT_EVENT, function () {
+          for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          var currRoot = args[1];
           initializeModule.apply(_this, [currRoot, bundleImport]);
         });
       }
@@ -4378,6 +4385,7 @@
     return Core;
   }();
 
+  exports.$ = $;
   exports.Component = Component;
   exports.Core = Core;
   exports.Render = Render;
