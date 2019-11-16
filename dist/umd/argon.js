@@ -2473,7 +2473,7 @@
 
         if (arguments.length === 1) {
           if (typeof key === 'string') {
-            return restoreData(this[0].getAttribute('key'));
+            return restoreData(this[0].getAttribute(key));
           }
 
           if (key && _typeof(key) === 'object') {
