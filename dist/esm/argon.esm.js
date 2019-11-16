@@ -3832,9 +3832,9 @@ function bundleImporter({ RefClass, root, parent }) {
         this.ref = new RefClass({ root, parent });
         if (typeof this.ref.init === 'function') {
             this.ref.init();
-            logger.log(`[Webpack]: component "${this.name}" has been initialized.`);
+            logger$1.log(`[Webpack]: component "${this.name}" has been initialized.`);
         } else {
-            logger.error(`[Webpack]: component "${this.name}" does not have an init method.`);
+            logger$1.error(`[Webpack]: component "${this.name}" does not have an init method.`);
         }
     }
 }

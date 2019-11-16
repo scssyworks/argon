@@ -1,3 +1,5 @@
+import { logger } from '../utils';
+
 export function bundleImporter({ RefClass, root, parent }) {
     if (typeof RefClass === 'function') {
         // Get component instance
