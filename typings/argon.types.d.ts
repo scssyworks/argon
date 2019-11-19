@@ -1,6 +1,6 @@
 declare class Selector {
-    constructor(selectorRef: string | Node | NodeList[] | HTMLCollection[] | Selector, createMode?: boolean): void;
-    const length: number;
+    constructor(selectorRef: string | Node | NodeList[] | HTMLCollection[] | Selector, createMode?: boolean);
+    length: number;
     add(selector: Selector): Selector;
     attr(key: string | object, value?: string): Selector | string;
     data(key: string | object, value?: string): Selector | string;
@@ -15,7 +15,7 @@ declare class Selector {
     detach(): Selector;
     prepend(domString: string | Selector): Selector;
     append(domString: string | Selector): Selector;
-    on(eventName: string, selector?: string | Selector, data?: object, callback: Function, useCapture?: boolean): Selector;
+    on(eventName: string, selector?: string | Selector, data?: object, callback?: Function, useCapture?: boolean): Selector;
     trigger(eventName: string, data?: any[]): Selector;
 }
 
@@ -27,7 +27,7 @@ declare class DocumentSelector extends Selector {
 declare function $(selectorRef: string | Selector | Node | NodeList[] | HTMLCollection[]): Selector | DocumentSelector;
 
 declare class Render {
-    constructor(templates: Function[]): void;
+    constructor(templates: Function[]);
     fn(options: RenderOptions): Promise<any>;
     get(templateName: string): Function;
 }
@@ -40,7 +40,7 @@ declare interface RenderOptions {
 }
 
 declare class Core {
-    init(currentRoot?: Selector, bundleImport: Function): void;
+    static init(currentRoot: Selector, bundleImport: Function): void;
 }
 
 declare class Component {
