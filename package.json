@@ -4,6 +4,7 @@
   "description": "Argon framework provides set of tools to build applications for AEM",
   "main": "dist/umd/argon.js",
   "module": "dist/esm/argon.esm.js",
+  "types": "typings/argon.types.d.ts",
   "scripts": {
     "start": "rollup -c --watch --environment SERVE:true",
     "build": "npm run test && rollup -c",
