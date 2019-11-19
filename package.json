@@ -42,7 +42,8 @@
     "webpack"
   ],
   "files": [
-    "dist/"
+    "dist/",
+    "typings/"
   ],
   "repository": {
     "type": "git",
