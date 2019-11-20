@@ -13,6 +13,22 @@ if (typeof window.CustomEvent === 'undefined') {
     window.CustomEvent = CustomEvent;
 }
 
+export function coerce(value) {
+    switch (value) {
+        case 'true': return true;
+        case 'false': return false;
+        case 'NaN': return NaN;
+        case 'null':
+        case 'NULL': return null;
+        case 'undefined': return undefined;
+        default:
+            if (!isNaN(value)) {
+                return +value;
+            }
+            return value;
+    };
+}
+
 export function isValidSelector(selector) {
     return (
         typeof selector === 'string'
@@ -265,7 +281,7 @@ class Selector {
     data(key, value) {
         if (arguments.length === 1) {
             if (typeof key === 'string') {
-                return this.attr(`data-${hiphenate(key)}`);
+                return coerce(this.attr(`data-${hiphenate(key)}`));
             }
             if (key && typeof key === 'object') {
                 const attrObject = {};
@@ -306,6 +322,9 @@ class Selector {
             }
         });
         return this;
+    }
+    empty() {
+        return this.html('');
     }
 }
 

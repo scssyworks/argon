@@ -2147,6 +2147,32 @@
     window.CustomEvent = CustomEvent;
   }
 
+  function coerce(value) {
+    switch (value) {
+      case 'true':
+        return true;
+
+      case 'false':
+        return false;
+
+      case 'NaN':
+        return NaN;
+
+      case 'null':
+      case 'NULL':
+        return null;
+
+      case 'undefined':
+        return undefined;
+
+      default:
+        if (!isNaN(value)) {
+          return +value;
+        }
+
+        return value;
+    }
+  }
   function isValidSelector(selector) {
     return typeof selector === 'string' || selector instanceof Selector || selector instanceof Node || selector instanceof NodeList || Array.isArray(selector);
   }
@@ -2449,7 +2475,7 @@
       value: function data(key, value) {
         if (arguments.length === 1) {
           if (typeof key === 'string') {
-            return this.attr("data-".concat(hiphenate(key)));
+            return coerce(this.attr("data-".concat(hiphenate(key))));
           }
 
           if (key && _typeof(key) === 'object') {
@@ -2508,6 +2534,11 @@
           }
         });
         return this;
+      }
+    }, {
+      key: "empty",
+      value: function empty() {
+        return this.html('');
       }
     }]);
 
@@ -2794,7 +2825,7 @@
     }).map(function (routeObj) {
       return routeObj.component;
     });
-    $(this.root).data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
+    $(this.root).empty().data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
     $body.trigger(ROOT_EVENT, [this.parent, {
       data: data,
       params: params,

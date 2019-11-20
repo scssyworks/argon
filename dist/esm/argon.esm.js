@@ -1977,6 +1977,21 @@ if (typeof window.CustomEvent === 'undefined') {
     window.CustomEvent = CustomEvent;
 }
 
+function coerce(value) {
+    switch (value) {
+        case 'true': return true;
+        case 'false': return false;
+        case 'NaN': return NaN;
+        case 'null':
+        case 'NULL': return null;
+        case 'undefined': return undefined;
+        default:
+            if (!isNaN(value)) {
+                return +value;
+            }
+            return value;
+    }}
+
 function isValidSelector(selector) {
     return (
         typeof selector === 'string'
@@ -2221,7 +2236,7 @@ class Selector {
     data(key, value) {
         if (arguments.length === 1) {
             if (typeof key === 'string') {
-                return this.attr(`data-${hiphenate(key)}`);
+                return coerce(this.attr(`data-${hiphenate(key)}`));
             }
             if (key && typeof key === 'object') {
                 const attrObject = {};
@@ -2262,6 +2277,9 @@ class Selector {
             }
         });
         return this;
+    }
+    empty() {
+        return this.html('');
     }
 }
 
@@ -2460,7 +2478,7 @@ function _handleRoutes(response, componentList) {
     const { route, data, params, query } = response.currentRoute;
     const routeList = response.routes();
     const components = routeList.filter(routeObj => routeObj.route === route).map(routeObj => routeObj.component);
-    $(this.root).data('module', [...componentList, ...components].join(','));
+    $(this.root).empty().data('module', [...componentList, ...components].join(','));
     $body.trigger(ROOT_EVENT, [this.parent, { data, params, query }]);
 }
 
