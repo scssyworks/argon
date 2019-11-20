@@ -2107,6 +2107,7 @@
   var INVALID_TEMPLATE_NAME = 'Please provide a valid template name.';
   var INVALID_SELECTOR = 'Please provide a valid selector.';
   var INVALID_TEMPLATE_MAP = 'Render requires a template object.';
+  var INVALID_ROUTES = "Invalid route object. Routes should be passed using below format:\n[\n    {\n        route: '/path/to/route',\n        component: 'ComponentClassName'\n    },\n    ...\n]";
 
   var $includes = arrayIncludes.includes;
 
@@ -2578,6 +2579,117 @@
   }
 
   var logger = new Logger();
+  function hasOwn(obj, prop) {
+    if (obj && _typeof(obj) === 'object') {
+      return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
+
+    return false;
+  }
+
+  var Router =
+  /*#__PURE__*/
+  function () {
+    function Router(routes, hashMode) {
+      var _this = this;
+
+      _classCallCheck(this, Router);
+
+      this.subscriptions = [];
+
+      if (Array.isArray(routes)) {
+        var normalRoutes = [];
+        var errorRoutes = [];
+        routes.forEach(function (routeObj) {
+          if (hasOwn(routeObj, 'component')) {
+            if (hasOwn(routeObj, 'route')) {
+              var routeString = "".concat(hashMode ? '#' : '').concat(routeObj.route);
+
+              if (!normalRoutes.includes(routeString)) {
+                normalRoutes.push(routeString);
+              }
+            } else if (hasOwn(routeObj, 'error')) {
+              var _routeString = "".concat(hashMode ? '#' : '').concat(routeObj.error);
+
+              if (!normalRoutes.includes(_routeString)) {
+                normalRoutes.push(_routeString);
+              }
+
+              if (!errorRoutes.includes(_routeString)) {
+                errorRoutes.push(_routeString);
+              }
+            }
+          } else {
+            throw new TypeError(INVALID_ROUTES);
+          }
+        });
+        this.routeList = routes;
+
+        this.routeFn = function (evt) {
+          if (normalRoutes.includes(evt.route)) {
+            var data = evt.data,
+                params = evt.params,
+                query = evt.query,
+                _route = evt.route;
+            _this.currentRoute = {
+              route: _route,
+              data: data,
+              params: params,
+              query: query
+            };
+
+            _this.subscriptions.forEach(function (fn) {
+              fn.apply(_this, [_this.currentRoute]);
+            });
+          } else if (errorRoutes.length) {
+            silkrouter.router.set(errorRoutes[0], true); // Replace existing route with error route
+          }
+        };
+
+        silkrouter.route(this.routeFn);
+
+        if (!window.location.hash && hashMode) {
+          silkrouter.router.set('#/', true);
+        }
+      } else {
+        throw new TypeError(INVALID_ROUTES);
+      }
+    }
+
+    _createClass(Router, [{
+      key: "routes",
+      value: function routes() {
+        return this.routeList;
+      }
+    }, {
+      key: "destroy",
+      value: function destroy() {
+        this.subscriptions.length = 0;
+        silkrouter.unroute(this.routeFn);
+      }
+    }, {
+      key: "navigate",
+      value: function navigate() {
+        silkrouter.router.set.apply(silkrouter.router, arguments);
+        return this;
+      }
+    }, {
+      key: "subscribe",
+      value: function subscribe(callback) {
+        if (typeof callback === 'function' && !this.subscriptions.includes(callback)) {
+          this.subscriptions.push(callback);
+        }
+
+        return this;
+      }
+    }]);
+
+    return Router;
+  }();
+
+  function routerFn() {
+    return _construct(Router, Array.prototype.slice.call(arguments));
+  }
 
   var $body = $(document.body);
 
@@ -2660,11 +2772,59 @@
     });
   }
 
+  function _handleRoutes(response, componentList) {
+    var _response$currentRout = response.currentRoute,
+        route = _response$currentRout.route,
+        data = _response$currentRout.data,
+        params = _response$currentRout.params,
+        query = _response$currentRout.query;
+    var routeList = response.routes();
+    var components = routeList.map(function (routeObj) {
+      if (routeObj.route === route) {
+        return routeObj.component;
+      }
+    });
+    $(this.root).data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
+    $body.trigger(ROOT_EVENT, [this.root, {
+      data: data,
+      params: params,
+      query: query
+    }]);
+  }
+
   function _doRender(response) {
     var _this3 = this;
 
     try {
-      if (typeof response === 'string') {
+      var currentComponents = $(this.root).data('module');
+      var componentList = [];
+
+      if (typeof currentComponents === 'string') {
+        componentList.push.apply(componentList, _toConsumableArray(currentComponents.split(',').map(function (c) {
+          return c.trim();
+        })));
+      }
+
+      if (response instanceof Router) {
+        // Handle routing
+        var _doDestroy = this.doDestroy;
+
+        this.doDestroy = function () {
+          response.destroy();
+
+          if (typeof _doDestroy === 'function') {
+            _doDestroy.apply(_this3);
+          }
+        };
+
+        if (response.currentRoute) {
+          _handleRoutes.apply(this, [response, componentList]);
+        }
+
+        response.subscribe(function () {
+          _handleRoutes.apply(_this3, [response, componentList]);
+        });
+      } else if (typeof response === 'string') {
         // Assuming response is a valid HTML
         _renderHTML.apply(this, [response]);
       } else if (typeof response === 'function') {
@@ -4241,13 +4401,15 @@
   function bundleImporter(_ref) {
     var RefClass = _ref.RefClass,
         root = _ref.root,
-        parent = _ref.parent;
+        parent = _ref.parent,
+        routeData = _ref.routeData;
 
     if (typeof RefClass === 'function') {
       // Get component instance
       this.ref = new RefClass({
         root: root,
-        parent: parent
+        parent: parent,
+        routeData: routeData
       });
 
       if (typeof this.ref.init === 'function') {
@@ -4319,6 +4481,7 @@
   function initializeModule() {
     var root = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : $(document);
     var bundleImport = arguments.length > 1 ? arguments[1] : undefined;
+    var routeData = arguments.length > 2 ? arguments[2] : undefined;
     var newImports = [];
     var currentRoot = $(root);
     currentRoot.find('[data-module]').each(function (el) {
@@ -4351,7 +4514,8 @@
           bundleImporter.call(component, {
             RefClass: args["default"],
             root: this.root,
-            parent: this.parent
+            parent: this.parent,
+            routeData: routeData
           });
         });
       });
@@ -4376,8 +4540,9 @@
             args[_key] = arguments[_key];
           }
 
-          var currRoot = args[1];
-          initializeModule.apply(_this, [currRoot, bundleImport]);
+          var currRoot = args[1],
+              routeData = args[2];
+          initializeModule.apply(_this, [currRoot, bundleImport, routeData]);
         });
       }
     }]);
@@ -4389,6 +4554,7 @@
   exports.Component = Component;
   exports.Core = Core;
   exports.Render = Render;
+  exports.router = routerFn;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

@@ -1,5 +1,5 @@
 import Logger from 'argon-logger';
-import { param } from 'silkrouter';
+import { router, route, unroute, param } from 'silkrouter';
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -1933,6 +1933,14 @@ const INVALID_SCHEMA = 'Invalid schema for URL object. Allowed fields are "path"
 const INVALID_TEMPLATE_NAME = 'Please provide a valid template name.';
 const INVALID_SELECTOR = 'Please provide a valid selector.';
 const INVALID_TEMPLATE_MAP = 'Render requires a template object.';
+const INVALID_ROUTES = `Invalid route object. Routes should be passed using below format:
+[
+    {
+        route: '/path/to/route',
+        component: 'ComponentClassName'
+    },
+    ...
+]`;
 
 var $includes = arrayIncludes.includes;
 
@@ -2297,6 +2305,84 @@ function $() {
 
 const logger = new Logger();
 
+function hasOwn(obj, prop) {
+    if (obj && typeof obj === 'object') {
+        return Object.prototype.hasOwnProperty.call(obj, prop);
+    }
+    return false;
+}
+
+class Router {
+    constructor(routes, hashMode) {
+        this.subscriptions = [];
+        if (Array.isArray(routes)) {
+            const normalRoutes = [];
+            const errorRoutes = [];
+            routes.forEach(routeObj => {
+                if (hasOwn(routeObj, 'component')) {
+                    if (hasOwn(routeObj, 'route')) {
+                        const routeString = `${hashMode ? '#' : ''}${routeObj.route}`;
+                        if (!normalRoutes.includes(routeString)) {
+                            normalRoutes.push(routeString);
+                        }
+                    } else if (hasOwn(routeObj, 'error')) {
+                        const routeString = `${hashMode ? '#' : ''}${routeObj.error}`;
+                        if (!normalRoutes.includes(routeString)) {
+                            normalRoutes.push(routeString);
+                        }
+                        if (!errorRoutes.includes(routeString)) {
+                            errorRoutes.push(routeString);
+                        }
+                    }
+                } else {
+                    throw new TypeError(INVALID_ROUTES);
+                }
+            });
+            this.routeList = routes;
+            this.routeFn = (evt) => {
+                if (normalRoutes.includes(evt.route)) {
+                    const { data, params, query, route } = evt;
+                    this.currentRoute = {
+                        route, data, params, query
+                    };
+                    this.subscriptions.forEach(fn => {
+                        fn.apply(this, [this.currentRoute]);
+                    });
+                } else if (errorRoutes.length) {
+                    router.set(errorRoutes[0], true); // Replace existing route with error route
+                }
+            };
+            route(this.routeFn);
+            if (!window.location.hash && hashMode) {
+                router.set('#/', true);
+            }
+        } else {
+            throw new TypeError(INVALID_ROUTES);
+        }
+    }
+    routes() {
+        return this.routeList;
+    }
+    destroy() {
+        this.subscriptions.length = 0;
+        unroute(this.routeFn);
+    }
+    navigate() {
+        router.set(...arguments);
+        return this;
+    }
+    subscribe(callback) {
+        if (typeof callback === 'function' && !this.subscriptions.includes(callback)) {
+            this.subscriptions.push(callback);
+        }
+        return this;
+    }
+}
+
+function routerFn() {
+    return new Router(...arguments);
+}
+
 const $body = $(document.body);
 
 function _renderHTML(response, target) {
@@ -2357,7 +2443,6 @@ function _resolvePromise(promise) {
     promise.then((response) => {
         _processResponses.apply(this, [response]);
     }).catch((response) => {
-
         if (typeof this.onError === 'function') {
             _processResponses.apply(this, [response]);
             this.onError(response);
@@ -2365,9 +2450,41 @@ function _resolvePromise(promise) {
     });
 }
 
+function _handleRoutes(response, componentList) {
+    const { route, data, params, query } = response.currentRoute;
+    const routeList = response.routes();
+    const components = routeList.map(routeObj => {
+        if (routeObj.route === route) {
+            return routeObj.component;
+        }
+    });
+    $(this.root).data('module', [...componentList, ...components].join(','));
+    $body.trigger(ROOT_EVENT, [this.root, { data, params, query }]);
+}
+
 function _doRender(response) {
     try {
-        if (typeof response === 'string') {
+        const currentComponents = $(this.root).data('module');
+        const componentList = [];
+        if (typeof currentComponents === 'string') {
+            componentList.push(...currentComponents.split(',').map(c => c.trim()));
+        }
+        if (response instanceof Router) {
+            // Handle routing
+            const _doDestroy = this.doDestroy;
+            this.doDestroy = () => {
+                response.destroy();
+                if (typeof _doDestroy === 'function') {
+                    _doDestroy.apply(this);
+                }
+            };
+            if (response.currentRoute) {
+                _handleRoutes.apply(this, [response, componentList]);
+            }
+            response.subscribe(() => {
+                _handleRoutes.apply(this, [response, componentList]);
+            });
+        } else if (typeof response === 'string') {
             // Assuming response is a valid HTML
             _renderHTML.apply(this, [response]);
         } else if (typeof response === 'function') {
@@ -3828,10 +3945,10 @@ class Render {
     }
 }
 
-function bundleImporter({ RefClass, root, parent }) {
+function bundleImporter({ RefClass, root, parent, routeData }) {
     if (typeof RefClass === 'function') {
         // Get component instance
-        this.ref = new RefClass({ root, parent });
+        this.ref = new RefClass({ root, parent, routeData });
         if (typeof this.ref.init === 'function') {
             this.ref.init();
             logger.log(`[Webpack]: component "${this.name}" has been initialized.`);
@@ -3885,7 +4002,7 @@ function diff(newImports, currentRoot) {
     return componentImports.filter(imp => !imp.imported);
 }
 
-function initializeModule(root = $(document), bundleImport) {
+function initializeModule(root = $(document), bundleImport, routeData) {
     const newImports = [];
     const currentRoot = $(root);
     currentRoot.find('[data-module]').each(el => {
@@ -3915,7 +4032,8 @@ function initializeModule(root = $(document), bundleImport) {
                 bundleImporter.call(component, {
                     RefClass: args.default,
                     root: this.root,
-                    parent: this.parent
+                    parent: this.parent,
+                    routeData
                 });
             });
         });
@@ -3926,11 +4044,11 @@ class Core {
     static init(currentRoot, bundleImport) {
         initializeModule.apply(this, [currentRoot, bundleImport]);
         $body$1.on(ROOT_EVENT, (...args) => {
-            const [, currRoot] = args;
-            initializeModule.apply(this, [currRoot, bundleImport]);
+            const [, currRoot, routeData] = args;
+            initializeModule.apply(this, [currRoot, bundleImport, routeData]);
         });
     }
 }
 
-export { $, Component, Core, Render };
+export { $, Component, Core, Render, routerFn as router };
 //# sourceMappingURL=argon.esm.js.map
