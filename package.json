@@ -1,7 +1,7 @@
 {
   "name": "argon",
   "version": "2.0.11",
-  "description": "Argon framework provides set of tools to build applications for AEM",
+  "description": "Argon framework provides set of tools to build front-end applications for AEM",
   "main": "dist/umd/argon.js",
   "module": "dist/esm/argon.esm.js",
   "types": "typings/argon.types.d.ts",

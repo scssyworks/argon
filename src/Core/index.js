@@ -47,7 +47,7 @@ function diff(newImports, currentRoot) {
     return componentImports.filter(imp => !imp.imported);
 }
 
-function initializeModule(root = $(document), bundleImport) {
+function initializeModule(root = $(document), bundleImport, routeData) {
     const newImports = [];
     const currentRoot = $(root);
     currentRoot.find('[data-module]').each(el => {
@@ -77,7 +77,8 @@ function initializeModule(root = $(document), bundleImport) {
                 bundleImporter.call(component, {
                     RefClass: args.default,
                     root: this.root,
-                    parent: this.parent
+                    parent: this.parent,
+                    routeData
                 });
             });
         });
@@ -88,8 +89,8 @@ export class Core {
     static init(currentRoot, bundleImport) {
         initializeModule.apply(this, [currentRoot, bundleImport]);
         $body.on(ROOT_EVENT, (...args) => {
-            const [, currRoot] = args;
-            initializeModule.apply(this, [currRoot, bundleImport]);
+            const [, currRoot, routeData] = args;
+            initializeModule.apply(this, [currRoot, bundleImport, routeData]);
         });
     }
 }

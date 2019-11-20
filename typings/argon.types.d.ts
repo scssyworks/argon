@@ -50,4 +50,27 @@ declare class Component {
     doDestroy(): void;
 }
 
-export { Component, Render, Core, $ };
+declare interface RouteList {
+    route: string;
+    component: string;
+}
+
+declare interface RouterOptions {
+    route: string;
+    replaceMode?: boolean;
+    noTrigger?: boolean;
+    queryString?: string;
+    data?: object;
+    appendQuery?: boolean;
+    title?: string;
+}
+
+declare class Router {
+    constructor(routeList: RouteList[], hashMode?: boolean);
+    navigate(route: string | RouterOptions, replaceMode?: boolean, noTrigger?: boolean): Router;
+    subscribe(fn: Function): Router;
+}
+
+declare function router(routeList: RouteList[], hashMode?: boolean): Router;
+
+export { Component, Render, Core, $, router };

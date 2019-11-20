@@ -16,3 +16,11 @@ export const INVALID_SCHEMA = 'Invalid schema for URL object. Allowed fields are
 export const INVALID_TEMPLATE_NAME = 'Please provide a valid template name.';
 export const INVALID_SELECTOR = 'Please provide a valid selector.';
 export const INVALID_TEMPLATE_MAP = 'Render requires a template object.';
+export const INVALID_ROUTES = `Invalid route object. Routes should be passed using below format:
+[
+    {
+        route: '/path/to/route',
+        component: 'ComponentClassName'
+    },
+    ...
+]`;

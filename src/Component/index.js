@@ -2,6 +2,7 @@ import 'core-js/features/promise';
 import { INVALID_RESPONSE_OBJECT, TARGET_MISSING, INVALID_RENDER_OBJECT, ROOT_EVENT } from '../constants';
 import { $, resolveData } from '../Selector';
 import { logger } from '../utils';
+import { Router } from '../Routing';
 
 const $body = $(document.body);
 
@@ -63,7 +64,6 @@ function _resolvePromise(promise) {
     promise.then((response) => {
         _processResponses.apply(this, [response]);
     }).catch((response) => {
-
         if (typeof this.onError === 'function') {
             _processResponses.apply(this, [response]);
             this.onError(response);
@@ -71,9 +71,41 @@ function _resolvePromise(promise) {
     });
 }
 
+function _handleRoutes(response, componentList) {
+    const { route, data, params, query } = response.currentRoute;
+    const routeList = response.routes();
+    const components = routeList.map(routeObj => {
+        if (routeObj.route === route) {
+            return routeObj.component;
+        }
+    });
+    $(this.root).data('module', [...componentList, ...components].join(','));
+    $body.trigger(ROOT_EVENT, [this.root, { data, params, query }]);
+}
+
 function _doRender(response) {
     try {
-        if (typeof response === 'string') {
+        const currentComponents = $(this.root).data('module');
+        const componentList = [];
+        if (typeof currentComponents === 'string') {
+            componentList.push(...currentComponents.split(',').map(c => c.trim()));
+        }
+        if (response instanceof Router) {
+            // Handle routing
+            const _doDestroy = this.doDestroy;
+            this.doDestroy = () => {
+                response.destroy();
+                if (typeof _doDestroy === 'function') {
+                    _doDestroy.apply(this);
+                }
+            }
+            if (response.currentRoute) {
+                _handleRoutes.apply(this, [response, componentList]);
+            }
+            response.subscribe(() => {
+                _handleRoutes.apply(this, [response, componentList]);
+            });
+        } else if (typeof response === 'string') {
             // Assuming response is a valid HTML
             _renderHTML.apply(this, [response]);
         } else if (typeof response === 'function') {
