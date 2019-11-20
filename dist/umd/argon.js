@@ -2596,6 +2596,7 @@
       _classCallCheck(this, Router);
 
       this.subscriptions = [];
+      this.hashMode = hashMode;
 
       if (Array.isArray(routes)) {
         var normalRoutes = [];
@@ -2626,23 +2627,25 @@
         this.routeList = routes;
 
         this.routeFn = function (evt) {
-          if (normalRoutes.includes(evt.route)) {
-            var data = evt.data,
-                params = evt.params,
-                query = evt.query,
-                _route = evt.route;
-            _this.currentRoute = {
-              route: _route,
-              data: data,
-              params: params,
-              query: query
-            };
+          if (hashMode && evt.hash || !hashMode) {
+            if (normalRoutes.includes(evt.route)) {
+              var data = evt.data,
+                  params = evt.params,
+                  query = evt.query,
+                  _route = evt.route;
+              _this.currentRoute = {
+                route: _route,
+                data: data,
+                params: params,
+                query: query
+              };
 
-            _this.subscriptions.forEach(function (fn) {
-              fn.apply(_this, [_this.currentRoute]);
-            });
-          } else if (errorRoutes.length) {
-            silkrouter.router.set(errorRoutes[0], true); // Replace existing route with error route
+              _this.subscriptions.forEach(function (fn) {
+                fn.apply(_this, [_this.currentRoute]);
+              });
+            } else if (errorRoutes.length) {
+              silkrouter.router.set(errorRoutes[0], true); // Replace existing route with error route
+            }
           }
         };
 
@@ -2659,7 +2662,14 @@
     _createClass(Router, [{
       key: "routes",
       value: function routes() {
-        return this.routeList;
+        var _this2 = this;
+
+        return this.routeList.map(function (routeObj) {
+          return {
+            route: "".concat(_this2.hashMode ? '#' : '').concat(routeObj.route),
+            component: routeObj.component
+          };
+        });
       }
     }, {
       key: "destroy",
@@ -2779,10 +2789,10 @@
         params = _response$currentRout.params,
         query = _response$currentRout.query;
     var routeList = response.routes();
-    var components = routeList.map(function (routeObj) {
-      if (routeObj.route === route) {
-        return routeObj.component;
-      }
+    var components = routeList.filter(function (routeObj) {
+      return routeObj.route === route;
+    }).map(function (routeObj) {
+      return routeObj.component;
     });
     $(this.root).data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
     $body.trigger(ROOT_EVENT, [this.root, {

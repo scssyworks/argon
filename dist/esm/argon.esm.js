@@ -2315,6 +2315,7 @@ function hasOwn(obj, prop) {
 class Router {
     constructor(routes, hashMode) {
         this.subscriptions = [];
+        this.hashMode = hashMode;
         if (Array.isArray(routes)) {
             const normalRoutes = [];
             const errorRoutes = [];
@@ -2340,16 +2341,18 @@ class Router {
             });
             this.routeList = routes;
             this.routeFn = (evt) => {
-                if (normalRoutes.includes(evt.route)) {
-                    const { data, params, query, route } = evt;
-                    this.currentRoute = {
-                        route, data, params, query
-                    };
-                    this.subscriptions.forEach(fn => {
-                        fn.apply(this, [this.currentRoute]);
-                    });
-                } else if (errorRoutes.length) {
-                    router.set(errorRoutes[0], true); // Replace existing route with error route
+                if ((hashMode && evt.hash) || !hashMode) {
+                    if (normalRoutes.includes(evt.route)) {
+                        const { data, params, query, route } = evt;
+                        this.currentRoute = {
+                            route, data, params, query
+                        };
+                        this.subscriptions.forEach(fn => {
+                            fn.apply(this, [this.currentRoute]);
+                        });
+                    } else if (errorRoutes.length) {
+                        router.set(errorRoutes[0], true); // Replace existing route with error route
+                    }
                 }
             };
             route(this.routeFn);
@@ -2361,7 +2364,10 @@ class Router {
         }
     }
     routes() {
-        return this.routeList;
+        return this.routeList.map(routeObj => ({
+            route: `${this.hashMode ? '#' : ''}${routeObj.route}`,
+            component: routeObj.component
+        }));
     }
     destroy() {
         this.subscriptions.length = 0;
@@ -2453,11 +2459,7 @@ function _resolvePromise(promise) {
 function _handleRoutes(response, componentList) {
     const { route, data, params, query } = response.currentRoute;
     const routeList = response.routes();
-    const components = routeList.map(routeObj => {
-        if (routeObj.route === route) {
-            return routeObj.component;
-        }
-    });
+    const components = routeList.filter(routeObj => routeObj.route === route).map(routeObj => routeObj.component);
     $(this.root).data('module', [...componentList, ...components].join(','));
     $body.trigger(ROOT_EVENT, [this.root, { data, params, query }]);
 }

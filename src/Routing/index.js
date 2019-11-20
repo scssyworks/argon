@@ -6,6 +6,7 @@ import { hasOwn } from '../utils';
 class Router {
     constructor(routes, hashMode) {
         this.subscriptions = [];
+        this.hashMode = hashMode;
         if (Array.isArray(routes)) {
             const normalRoutes = [];
             const errorRoutes = [];
@@ -31,16 +32,18 @@ class Router {
             });
             this.routeList = routes;
             this.routeFn = (evt) => {
-                if (normalRoutes.includes(evt.route)) {
-                    const { data, params, query, route } = evt;
-                    this.currentRoute = {
-                        route, data, params, query
-                    };
-                    this.subscriptions.forEach(fn => {
-                        fn.apply(this, [this.currentRoute]);
-                    });
-                } else if (errorRoutes.length) {
-                    router.set(errorRoutes[0], true); // Replace existing route with error route
+                if ((hashMode && evt.hash) || !hashMode) {
+                    if (normalRoutes.includes(evt.route)) {
+                        const { data, params, query, route } = evt;
+                        this.currentRoute = {
+                            route, data, params, query
+                        };
+                        this.subscriptions.forEach(fn => {
+                            fn.apply(this, [this.currentRoute]);
+                        });
+                    } else if (errorRoutes.length) {
+                        router.set(errorRoutes[0], true); // Replace existing route with error route
+                    }
                 }
             }
             route(this.routeFn);
@@ -52,7 +55,10 @@ class Router {
         }
     }
     routes() {
-        return this.routeList;
+        return this.routeList.map(routeObj => ({
+            route: `${this.hashMode ? '#' : ''}${routeObj.route}`,
+            component: routeObj.component
+        }));
     }
     destroy() {
         this.subscriptions.length = 0;
