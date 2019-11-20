@@ -2461,7 +2461,7 @@ function _handleRoutes(response, componentList) {
     const routeList = response.routes();
     const components = routeList.filter(routeObj => routeObj.route === route).map(routeObj => routeObj.component);
     $(this.root).data('module', [...componentList, ...components].join(','));
-    $body.trigger(ROOT_EVENT, [this.root, { data, params, query }]);
+    $body.trigger(ROOT_EVENT, [this.parent, { data, params, query }]);
 }
 
 function _doRender(response) {
@@ -2513,9 +2513,10 @@ function _doRender(response) {
 }
 
 class Component {
-    constructor({ root, parent }) {
+    constructor({ root, parent, routeData }) {
         this.root = root;
         this.parent = parent;
+        this.routeData = routeData;
     }
     init() {
         if (typeof this.doInit === 'function') {

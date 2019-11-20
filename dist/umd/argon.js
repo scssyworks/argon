@@ -2795,7 +2795,7 @@
       return routeObj.component;
     });
     $(this.root).data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
-    $body.trigger(ROOT_EVENT, [this.root, {
+    $body.trigger(ROOT_EVENT, [this.parent, {
       data: data,
       params: params,
       query: query
@@ -2865,12 +2865,14 @@
   function () {
     function Component(_ref) {
       var root = _ref.root,
-          parent = _ref.parent;
+          parent = _ref.parent,
+          routeData = _ref.routeData;
 
       _classCallCheck(this, Component);
 
       this.root = root;
       this.parent = parent;
+      this.routeData = routeData;
     }
 
     _createClass(Component, [{
