@@ -128,9 +128,10 @@ function _doRender(response) {
 }
 
 export class Component {
-    constructor({ root, parent }) {
+    constructor({ root, parent, routeData }) {
         this.root = root;
         this.parent = parent;
+        this.routeData = routeData;
     }
     init() {
         if (typeof this.doInit === 'function') {
