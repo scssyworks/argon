@@ -2825,7 +2825,7 @@
     }).map(function (routeObj) {
       return routeObj.component;
     });
-    $(this.root).empty().data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
+    $(this.root).data('rendered', 'false').data('module', [].concat(_toConsumableArray(componentList), _toConsumableArray(components)).join(','));
     $body.trigger(ROOT_EVENT, [this.parent, {
       data: data,
       params: params,

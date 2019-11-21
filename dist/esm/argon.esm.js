@@ -2478,7 +2478,7 @@ function _handleRoutes(response, componentList) {
     const { route, data, params, query } = response.currentRoute;
     const routeList = response.routes();
     const components = routeList.filter(routeObj => routeObj.route === route).map(routeObj => routeObj.component);
-    $(this.root).empty().data('module', [...componentList, ...components].join(','));
+    $(this.root).data('rendered', 'false').data('module', [...componentList, ...components].join(','));
     $body.trigger(ROOT_EVENT, [this.parent, { data, params, query }]);
 }
 
