@@ -24,3 +24,4 @@ export const INVALID_ROUTES = `Invalid route object. Routes should be passed usi
     },
     ...
 ]`;
+export const ROUTE_NOT_FOUND = 'Provided route is not defined!';

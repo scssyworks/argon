@@ -2108,6 +2108,7 @@
   var INVALID_SELECTOR = 'Please provide a valid selector.';
   var INVALID_TEMPLATE_MAP = 'Render requires a template object.';
   var INVALID_ROUTES = "Invalid route object. Routes should be passed using below format:\n[\n    {\n        route: '/path/to/route',\n        component: 'ComponentClassName'\n    },\n    ...\n]";
+  var ROUTE_NOT_FOUND = 'Provided route is not defined!';
 
   var $includes = arrayIncludes.includes;
 
@@ -2676,6 +2677,8 @@
               });
             } else if (errorRoutes.length) {
               silkrouter.router.set(errorRoutes[0], true); // Replace existing route with error route
+            } else {
+              throw new Error(ROUTE_NOT_FOUND);
             }
           }
         };

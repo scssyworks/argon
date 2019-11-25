@@ -1,6 +1,6 @@
 import { router, route, unroute } from 'silkrouter';
 import 'core-js/features/array/includes';
-import { INVALID_ROUTES } from '../constants';
+import { INVALID_ROUTES, ROUTE_NOT_FOUND } from '../constants';
 import { hasOwn } from '../utils';
 
 class Router {
@@ -43,6 +43,8 @@ class Router {
                         });
                     } else if (errorRoutes.length) {
                         router.set(errorRoutes[0], true); // Replace existing route with error route
+                    } else {
+                        throw new Error(ROUTE_NOT_FOUND);
                     }
                 }
             }

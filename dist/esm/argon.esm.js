@@ -1941,6 +1941,7 @@ const INVALID_ROUTES = `Invalid route object. Routes should be passed using belo
     },
     ...
 ]`;
+const ROUTE_NOT_FOUND = 'Provided route is not defined!';
 
 var $includes = arrayIncludes.includes;
 
@@ -2370,6 +2371,8 @@ class Router {
                         });
                     } else if (errorRoutes.length) {
                         router.set(errorRoutes[0], true); // Replace existing route with error route
+                    } else {
+                        throw new Error(ROUTE_NOT_FOUND);
                     }
                 }
             };
